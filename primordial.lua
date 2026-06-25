@@ -860,6 +860,7 @@ function PrimordialUI:CreateWindow(config)
                         local label    = config.Text     or "Keybind"
                         local default  = config.Default  or "None"
                         local callback = config.Callback or function() end
+                        local linked   = config.Linked   or nil  -- linked Toggle object
 
                         local row = MakeFrame(box, UDim2.new(1,0,0,24), nil, Theme.BGTertiary)
                         local lbl = MakeLabel(row, label,
@@ -879,6 +880,14 @@ function PrimordialUI:CreateWindow(config)
 
                         local listening = false
                         local value = default
+                        local boundKey = nil
+
+                        -- Try to convert default string to KeyCode
+                        pcall(function()
+                            if default ~= "None" then
+                                boundKey = Enum.KeyCode[default]
+                            end
+                        end)
 
                         keyBtn.MouseButton1Click:Connect(function()
                             listening = true
@@ -887,17 +896,33 @@ function PrimordialUI:CreateWindow(config)
                         end)
 
                         UserInputService.InputBegan:Connect(function(inp, gp)
-                            if not listening then return end
-                            if inp.UserInputType == Enum.UserInputType.Keyboard then
-                                listening = false
-                                value = inp.KeyCode.Name
-                                keyBtn.Text = "Key: "..value
-                                keyBtn.TextColor3 = Theme.Accent
-                                callback(inp.KeyCode)
+                            if gp then return end
+                            if listening then
+                                if inp.UserInputType == Enum.UserInputType.Keyboard then
+                                    listening = false
+                                    value = inp.KeyCode.Name
+                                    boundKey = inp.KeyCode
+                                    keyBtn.Text = "Key: "..value
+                                    keyBtn.TextColor3 = Theme.Accent
+                                    callback(inp.KeyCode)
+                                end
+                                return
+                            end
+                            -- Toggle linked feature when key pressed
+                            if boundKey and inp.KeyCode == boundKey then
+                                if linked and linked.SetValue then
+                                    linked:SetValue(not linked.Value)
+                                end
                             end
                         end)
 
                         local KP = {Value = value}
+                        function KP:SetValue(v)
+                            value = tostring(v)
+                            keyBtn.Text = "Key: "..value
+                            KP.Value = value
+                            callback(v)
+                        end
                         return KP
                     end
 
@@ -1274,6 +1299,19 @@ function PrimordialUI:CreateWindow(config)
                 nFrame:Destroy()
             end)
         end)
+    end
+
+    -- Menu keybind (RightShift by default to show/hide)
+    local menuKeybind = Enum.KeyCode.RightShift
+    UserInputService.InputBegan:Connect(function(inp, gp)
+        if gp then return end
+        if inp.KeyCode == menuKeybind then
+            Window._main.Visible = not Window._main.Visible
+        end
+    end)
+
+    function Window:SetMenuKey(key)
+        menuKeybind = key
     end
 
     -- ─────────────────────────────────────────────────────────────
