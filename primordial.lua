@@ -309,7 +309,13 @@ function PrimordialUI:CreateWindow(config)
         local tabContent = MakeFrame(Window._content,
             UDim2.new(1,-151,1,0),
             UDim2.new(0,151,0,0),
+            Theme.BGSecondary)  -- BGSecondary so top bar blends seamlessly
+        -- Clip below the sub-tab bar to BG color
+        local tabContentBG = MakeFrame(tabContent,
+            UDim2.new(1,0,1,-36),
+            UDim2.new(0,0,0,36),
             Theme.BG)
+        tabContentBG.ZIndex = 1
         tabContent.Visible = false
         Tab._frame = tabContent
 
@@ -419,7 +425,7 @@ function PrimordialUI:CreateWindow(config)
             pageFrame.Visible = false
             Page._frame = pageFrame
 
-            -- Sub-tab bar - full width background always visible
+            -- Sub-tab bar sits on the persistent top bar
             local subBarBG = MakeFrame(pageFrame,
                 UDim2.new(1,0,0,36),
                 UDim2.new(0,0,0,0),
@@ -429,6 +435,7 @@ function PrimordialUI:CreateWindow(config)
                 UDim2.new(1,0,1,0),
                 UDim2.new(0,0,0,0),
                 Theme.BGSecondary)
+            subBar.BackgroundTransparency = 1
             MakeListLayout(subBar, Enum.FillDirection.Horizontal, 0,
                 Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Center)
             MakePadding(subBar, 0, 0, 0, 8)
