@@ -1,5 +1,3 @@
--- Primordial UI Library
--- Recreated from reference image
 
 local PrimordialUI = {}
 local TweenService = game:GetService("TweenService")
