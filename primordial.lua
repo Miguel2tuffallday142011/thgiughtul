@@ -430,12 +430,9 @@ function PrimordialUI:CreateWindow(config)
                 UDim2.new(1,0,0,36),
                 UDim2.new(0,0,0,0),
                 Theme.BGSecondary)
+            subBarBG.ZIndex = 2
 
-            local subBar = MakeFrame(subBarBG,
-                UDim2.new(1,0,1,0),
-                UDim2.new(0,0,0,0),
-                Theme.BGSecondary)
-            subBar.BackgroundTransparency = 1
+            local subBar = subBarBG
             MakeListLayout(subBar, Enum.FillDirection.Horizontal, 0,
                 Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Center)
             MakePadding(subBar, 0, 0, 0, 8)
