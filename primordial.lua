@@ -462,16 +462,15 @@ function PrimordialUI:CreateWindow(config)
             colList.Parent = colHolder
             Page._colHolder = colHolder
 
-            -- Left column — full width, right column gets content if used
-            local leftCol = MakeFrame(colHolder, UDim2.new(1,0,0,0), UDim2.new(0,0,0,0), Theme.BG)
+            -- Left column — always half width
+            local leftCol = MakeFrame(colHolder, UDim2.new(0.5,-4,0,0), UDim2.new(0,0,0,0), Theme.BG)
             leftCol.AutomaticSize = Enum.AutomaticSize.Y
             MakeListLayout(leftCol, Enum.FillDirection.Vertical, 8)
             Page._leftCol = leftCol
 
-            -- Right column (overlaid, only visible when sections added to it)
-            local rightCol = MakeFrame(colHolder, UDim2.new(1,0,0,0), UDim2.new(0,0,0,0), Theme.BG)
+            -- Right column — always half width
+            local rightCol = MakeFrame(colHolder, UDim2.new(0.5,-4,0,0), UDim2.new(0,0,0,0), Theme.BG)
             rightCol.AutomaticSize = Enum.AutomaticSize.Y
-            rightCol.Visible = false
             MakeListLayout(rightCol, Enum.FillDirection.Vertical, 8)
             Page._rightCol = rightCol
 
