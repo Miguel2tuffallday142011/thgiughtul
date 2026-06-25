@@ -12,7 +12,7 @@ local Theme = {
     BGSecondary = Color3.fromRGB(28, 28, 28),
     BGTertiary  = Color3.fromRGB(32, 32, 32),
     BGItem      = Color3.fromRGB(38, 38, 38),
-    Accent      = Color3.fromRGB(220, 80, 80),    AccentDim   = Color3.fromRGB(160, 50, 50),
+    Accent      = Color3.fromRGB(204, 70, 90),    AccentDim   = Color3.fromRGB(160, 50, 50),
     TextPrimary = Color3.fromRGB(255, 255, 255),
     TextSecond  = Color3.fromRGB(160, 160, 160),
     TextDim     = Color3.fromRGB(100, 100, 100),
@@ -160,37 +160,16 @@ function PrimordialUI:CreateWindow(config)
     -- Fix bottom corners of header
     local hfix = MakeFrame(header, UDim2.new(1,0,0,10), UDim2.new(0,0,1,-10), Theme.BGSecondary)
 
-    -- Logo: image if provided, else ⊗ text icon
-    if image then
-        local logoImg = Instance.new("ImageLabel")
-        logoImg.Size = UDim2.fromOffset(28, 28)
-        logoImg.Position = UDim2.fromOffset(14, 11)
-        logoImg.BackgroundTransparency = 1
-        logoImg.Image = image
-        logoImg.ScaleType = Enum.ScaleType.Fit
-        logoImg.Parent = header
-    else
-        local logoIcon = Instance.new("TextLabel")
-        logoIcon.Size = UDim2.fromOffset(28, 28)
-        logoIcon.Position = UDim2.fromOffset(16, 11)
-        logoIcon.BackgroundTransparency = 1
-        logoIcon.Text = "⊗"
-        logoIcon.TextColor3 = Theme.Accent
-        logoIcon.Font = Enum.Font.GothamBold
-        logoIcon.TextSize = 22
-        logoIcon.Parent = header
-    end
-
     local titleLabel = MakeLabel(header,
         title,
         UDim2.fromOffset(200, 28),
-        UDim2.fromOffset(50, 11),
+        UDim2.fromOffset(14, 11),
         Theme.TextPrimary,
-        Enum.Font.GothamBold, 16)
+        Enum.Font.GothamBold, 20)
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 
     -- Separator line under header
-    local sep = MakeFrame(main, UDim2.new(1,0,0,1), UDim2.new(0,0,0,50), Theme.Border)
+    local sep = MakeFrame(main, UDim2.new(1,0,0,1), UDim2.new(0,0,0,50), Theme.Accent)
 
     -- Content area (everything below header, above tab bar)
     local content = MakeFrame(main,
@@ -253,7 +232,7 @@ function PrimordialUI:CreateWindow(config)
         UDim2.new(0,0,1,-48),
         Theme.TabBar)
     local tabFix = MakeFrame(tabBar, UDim2.new(1,0,0,6), UDim2.new(0,0,0,0), Theme.TabBar)
-    local tabSep = MakeFrame(tabBar, UDim2.new(1,0,0,1), UDim2.new(0,0,0,0), Theme.Border)
+    local tabSep = MakeFrame(tabBar, UDim2.new(1,0,0,1), UDim2.new(0,0,0,0), Theme.Accent)
     local tabList = Instance.new("Frame")
     tabList.Size = UDim2.new(1,0,1,0)
     tabList.BackgroundTransparency = 1
@@ -456,13 +435,11 @@ function PrimordialUI:CreateWindow(config)
                 for _, p in ipairs(Tab._pages) do
                     p._frame.Visible = false
                     p._sideAccent.Visible = false
-                    p._sideBG.BackgroundTransparency = 1
                     Tween(p._sideTitle, {TextColor3 = Theme.TextDim}, 0.15)
                     Tween(p._sideSub,   {TextColor3 = Theme.TextDim}, 0.15)
                 end
                 self._frame.Visible = true
                 self._sideAccent.Visible = true
-                Tween(self._sideBG, {BackgroundTransparency = 0.88}, 0.15)
                 Tween(self._sideTitle, {TextColor3 = Theme.TextPrimary}, 0.15)
                 Tween(self._sideSub,   {TextColor3 = Theme.Accent}, 0.15)
                 Tab._selPage = self
@@ -531,23 +508,16 @@ function PrimordialUI:CreateWindow(config)
                 stColHolder.AutomaticSize = Enum.AutomaticSize.Y
                 stColHolder.Visible = false
                 stColHolder.Parent = Page._colScroll
-                local stColList = Instance.new("UIListLayout")
-                stColList.FillDirection = Enum.FillDirection.Horizontal
-                stColList.Padding = UDim.new(0, 8)
-                stColList.HorizontalAlignment = Enum.HorizontalAlignment.Left
-                stColList.VerticalAlignment = Enum.VerticalAlignment.Top
-                stColList.SortOrder = Enum.SortOrder.LayoutOrder
-                stColList.Parent = stColHolder
 
                 local stLeftHolder = MakeFrame(stColHolder,
-                    UDim2.fromOffset(300, 0), UDim2.new(0,0,0,0), Theme.BG)
+                    UDim2.new(1, 0, 0, 0), UDim2.new(0,0,0,0), Theme.BG)
                 stLeftHolder.AnchorPoint = Vector2.new(0,0)
                 stLeftHolder.AutomaticSize = Enum.AutomaticSize.Y
                 MakeListLayout(stLeftHolder, Enum.FillDirection.Vertical, 8)
                 SubTab._leftHolder = stLeftHolder
 
                 local stRightHolder = MakeFrame(stColHolder,
-                    UDim2.fromOffset(300, 0), UDim2.new(0,0,0,0), Theme.BG)
+                    UDim2.new(0.5, -4, 0, 0), UDim2.new(0.5, 4, 0, 0), Theme.BG)
                 stRightHolder.AnchorPoint = Vector2.new(0,0)
                 stRightHolder.AutomaticSize = Enum.AutomaticSize.Y
                 stRightHolder.Visible = false
@@ -601,8 +571,8 @@ function PrimordialUI:CreateWindow(config)
                     -- First right section: switch to two-column layout
                     if side == "Right" and not SubTab._hasTwoCols then
                         SubTab._hasTwoCols = true
-                        SubTab._leftHolder.Size = UDim2.fromOffset(300, 0)
-                        SubTab._rightHolder.Size = UDim2.fromOffset(300, 0)
+                        SubTab._leftHolder.Size = UDim2.new(0.5, -4, 0, 0)
+                        SubTab._rightHolder.Size = UDim2.new(0.5, -4, 0, 0)
                         SubTab._rightHolder.Visible = true
                     end
 
@@ -623,7 +593,7 @@ function PrimordialUI:CreateWindow(config)
                         UDim2.new(1,0,1,0), nil,
                         Theme.TextSecond, Enum.Font.GothamBold, 12)
                     -- Divider line after title
-                    local div = MakeFrame(box, UDim2.new(1,0,0,1), nil, Theme.Border)
+                    local div = MakeFrame(box, UDim2.new(1,0,0,1), nil, Theme.Accent)
 
                     Section._box = box
 
