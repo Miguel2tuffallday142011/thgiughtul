@@ -164,7 +164,7 @@ function PrimordialUI:CreateWindow(config)
         title,
         UDim2.fromOffset(200, 28),
         UDim2.fromOffset(14, 11),
-        Theme.Accent,
+        Theme.TextPrimary,
         Enum.Font.GothamBold, 20)
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 
@@ -1231,8 +1231,220 @@ function PrimordialUI:CreateWindow(config)
                         return CP
                     end
 
-                    return Section
-                end -- AddSection
+                    -- ── ColorRow (multiple color pickers side by side) ───────
+                    function Section:AddColorRow(config)
+                        config = config or {}
+                        local label    = config.Text     or "Color"
+                        local colors   = config.Colors   or {}  -- array of {Default, Callback, Label}
+
+                        local row = MakeFrame(box, UDim2.fromOffset(0,0), nil, Theme.BGTertiary)
+                        row.AutomaticSize = Enum.AutomaticSize.XY
+
+                        local lbl = MakeLabel(row, label,
+                            UDim2.new(1,0,0,14), nil, Theme.TextSecond, Enum.Font.Gotham, 11)
+
+                        local swatchRow = Instance.new("Frame")
+                        swatchRow.Size = UDim2.fromOffset(0, 20)
+                        swatchRow.Position = UDim2.fromOffset(0, 16)
+                        swatchRow.BackgroundTransparency = 1
+                        swatchRow.AutomaticSize = Enum.AutomaticSize.X
+                        swatchRow.Parent = row
+                        local swatchList = Instance.new("UIListLayout")
+                        swatchList.FillDirection = Enum.FillDirection.Horizontal
+                        swatchList.Padding = UDim.new(0, 4)
+                        swatchList.HorizontalAlignment = Enum.HorizontalAlignment.Left
+                        swatchList.VerticalAlignment = Enum.VerticalAlignment.Center
+                        swatchList.SortOrder = Enum.SortOrder.LayoutOrder
+                        swatchList.Parent = swatchRow
+
+                        local pickers = {}
+                        for i, c in ipairs(colors) do
+                            local default  = c.Default  or Color3.fromRGB(255,255,255)
+                            local callback = c.Callback or function() end
+                            local slabel   = c.Label    or ""
+
+                            local swatchFrame = MakeFrame(swatchRow, UDim2.fromOffset(50, 20), nil, Theme.BGItem)
+                            swatchFrame.BackgroundColor3 = default
+                            MakeCorner(swatchFrame, 5)
+
+                            -- Border
+                            local stroke = Instance.new("UIStroke")
+                            stroke.Color = Theme.Border
+                            stroke.Thickness = 1
+                            stroke.Parent = swatchFrame
+
+                            local swatchBtn = Instance.new("TextButton")
+                            swatchBtn.Size = UDim2.new(1,0,1,0)
+                            swatchBtn.BackgroundTransparency = 1
+                            swatchBtn.Text = ""
+                            swatchBtn.Parent = swatchFrame
+
+                            local value = default
+                            local isOpen = false
+                            local picker = nil
+
+                            local function closePicker()
+                                if picker then picker:Destroy(); picker = nil end
+                                isOpen = false
+                            end
+
+                            local function openPicker()
+                                if picker then closePicker(); return end
+                                isOpen = true
+                                picker = Instance.new("Frame")
+                                picker.Size = UDim2.fromOffset(210, 215)
+                                picker.BackgroundColor3 = Theme.BGItem
+                                picker.BorderSizePixel = 0
+                                picker.ZIndex = 50
+                                MakeCorner(picker, 6)
+                                local absPos = swatchFrame.AbsolutePosition
+                                picker.Position = UDim2.fromOffset(
+                                    math.clamp(absPos.X - 80, 10, 999),
+                                    absPos.Y - 225)
+                                picker.Parent = sg
+                                MakePadding(picker, 8,8,8,8)
+
+                                local sbField = Instance.new("Frame")
+                                sbField.Size = UDim2.fromOffset(150, 150)
+                                sbField.Position = UDim2.fromOffset(0, 0)
+                                sbField.BackgroundColor3 = Color3.fromHSV(0, 1, 1)
+                                sbField.BorderSizePixel = 0
+                                sbField.ZIndex = 51
+                                sbField.Parent = picker
+                                MakeCorner(sbField, 4)
+
+                                local whiteGrad = Instance.new("Frame")
+                                whiteGrad.Size = UDim2.new(1,0,1,0)
+                                whiteGrad.BackgroundColor3 = Color3.fromRGB(255,255,255)
+                                whiteGrad.BorderSizePixel = 0
+                                whiteGrad.ZIndex = 52
+                                whiteGrad.Parent = sbField
+                                MakeCorner(whiteGrad, 4)
+                                local wg = Instance.new("UIGradient")
+                                wg.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,0), NumberSequenceKeypoint.new(1,1)})
+                                wg.Parent = whiteGrad
+
+                                local blackGrad = Instance.new("Frame")
+                                blackGrad.Size = UDim2.new(1,0,1,0)
+                                blackGrad.BackgroundColor3 = Color3.fromRGB(0,0,0)
+                                blackGrad.BorderSizePixel = 0
+                                blackGrad.ZIndex = 53
+                                blackGrad.Parent = sbField
+                                MakeCorner(blackGrad, 4)
+                                local bg2 = Instance.new("UIGradient")
+                                bg2.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,1), NumberSequenceKeypoint.new(1,0)})
+                                bg2.Rotation = 90
+                                bg2.Parent = blackGrad
+
+                                local sbClick = Instance.new("TextButton")
+                                sbClick.Size = UDim2.new(1,0,1,0)
+                                sbClick.BackgroundTransparency = 1
+                                sbClick.Text = ""
+                                sbClick.ZIndex = 55
+                                sbClick.Parent = sbField
+
+                                local h_val, s_val, v_val = value:ToHSV()
+                                local sbCursor = MakeFrame(sbField, UDim2.fromOffset(8,8),
+                                    UDim2.fromScale(s_val, 1-v_val), Theme.TextPrimary)
+                                sbCursor.AnchorPoint = Vector2.new(0.5,0.5)
+                                MakeCorner(sbCursor, 4)
+                                sbCursor.ZIndex = 56
+
+                                local hueBar = Instance.new("ImageButton")
+                                hueBar.Size = UDim2.fromOffset(10, 150)
+                                hueBar.Position = UDim2.fromOffset(160, 0)
+                                hueBar.Image = "rbxassetid://8180989234"
+                                hueBar.ScaleType = Enum.ScaleType.Crop
+                                hueBar.BorderSizePixel = 0
+                                hueBar.AutoButtonColor = false
+                                hueBar.ZIndex = 51
+                                hueBar.Parent = picker
+                                MakeCorner(hueBar, 3)
+                                local hueCursor = MakeFrame(hueBar, UDim2.new(1,4,0,2), UDim2.new(-0.2,0,h_val,-1), Theme.TextPrimary)
+                                hueCursor.ZIndex = 52
+
+                                local hexFrame = MakeFrame(picker, UDim2.fromOffset(176,18), UDim2.fromOffset(0,158), Theme.BGSecondary)
+                                MakeCorner(hexFrame, 3)
+                                local hexBox = Instance.new("TextBox")
+                                hexBox.Size = UDim2.new(1,-6,1,0)
+                                hexBox.Position = UDim2.fromOffset(4,0)
+                                hexBox.BackgroundTransparency = 1
+                                hexBox.Text = "#"..string.upper(value:ToHex())
+                                hexBox.TextColor3 = Theme.TextSecond
+                                hexBox.Font = Enum.Font.GothamBold
+                                hexBox.TextSize = 11
+                                hexBox.BorderSizePixel = 0
+                                hexBox.ClearTextOnFocus = false
+                                hexBox.ZIndex = 52
+                                hexBox.Parent = hexFrame
+
+                                local function applyColor()
+                                    value = Color3.fromHSV(h_val, s_val, v_val)
+                                    swatchFrame.BackgroundColor3 = value
+                                    sbField.BackgroundColor3 = Color3.fromHSV(h_val, 1, 1)
+                                    sbCursor.Position = UDim2.fromScale(math.clamp(s_val,0.01,0.99), math.clamp(1-v_val,0.01,0.99))
+                                    hueCursor.Position = UDim2.new(-0.2,0,math.clamp(h_val,0,0.98),-1)
+                                    hexBox.Text = "#"..string.upper(value:ToHex())
+                                    callback(value)
+                                end
+                                applyColor()
+
+                                local dSB, dHue = false, false
+                                sbClick.InputBegan:Connect(function(inp)
+                                    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                                        dSB = true
+                                        local rel = (Vector2.new(inp.Position.X,inp.Position.Y) - sbField.AbsolutePosition)/sbField.AbsoluteSize
+                                        s_val=math.clamp(rel.X,0,1); v_val=math.clamp(1-rel.Y,0,1); applyColor()
+                                    end
+                                end)
+                                hueBar.InputBegan:Connect(function(inp)
+                                    if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                                        dHue = true
+                                        h_val = math.clamp((inp.Position.Y-hueBar.AbsolutePosition.Y)/hueBar.AbsoluteSize.Y,0,1); applyColor()
+                                    end
+                                end)
+                                UserInputService.InputChanged:Connect(function(inp)
+                                    if inp.UserInputType ~= Enum.UserInputType.MouseMovement and inp.UserInputType ~= Enum.UserInputType.Touch then return end
+                                    if dSB then
+                                        local rel = (Vector2.new(inp.Position.X,inp.Position.Y)-sbField.AbsolutePosition)/sbField.AbsoluteSize
+                                        s_val=math.clamp(rel.X,0,1); v_val=math.clamp(1-rel.Y,0,1); applyColor()
+                                    elseif dHue then
+                                        h_val=math.clamp((inp.Position.Y-hueBar.AbsolutePosition.Y)/hueBar.AbsoluteSize.Y,0,1); applyColor()
+                                    end
+                                end)
+                                UserInputService.InputEnded:Connect(function(inp)
+                                    if inp.UserInputType==Enum.UserInputType.MouseButton1 or inp.UserInputType==Enum.UserInputType.Touch then dSB=false; dHue=false end
+                                end)
+                                hexBox.FocusLost:Connect(function()
+                                    pcall(function()
+                                        local col = Color3.fromHex(hexBox.Text:gsub("#",""):sub(1,6))
+                                        h_val,s_val,v_val = col:ToHSV(); applyColor()
+                                    end)
+                                end)
+                                local cc; cc = UserInputService.InputBegan:Connect(function(inp)
+                                    if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                                        local mp = Vector2.new(inp.Position.X,inp.Position.Y)
+                                        local ap,as = picker.AbsolutePosition, picker.AbsoluteSize
+                                        if mp.X<ap.X or mp.X>ap.X+as.X or mp.Y<ap.Y or mp.Y>ap.Y+as.Y then
+                                            cc:Disconnect(); task.defer(closePicker)
+                                        end
+                                    end
+                                end)
+                            end
+
+                            swatchBtn.MouseButton1Click:Connect(function()
+                                if isOpen then closePicker() else openPicker() end
+                            end)
+
+                            local CP = {Value = value}
+                            function CP:SetValue(v)
+                                value = v; swatchFrame.BackgroundColor3 = v; CP.Value = v; callback(v)
+                            end
+                            table.insert(pickers, CP)
+                        end
+
+                        return pickers
+                    end
 
                 return SubTab
             end -- AddSubTab
@@ -1323,8 +1535,7 @@ function PrimordialUI:CreateWindow(config)
         Theme.Accent = color
         Theme.SliderFill = color
         -- Update title color
-        if titleLabel then titleLabel.TextColor3 = color end
-        -- Recursively update all accent-colored elements
+        if titleLabel then titleLabel.TextColor3 = color end        -- Recursively update all accent-colored elements
         local function updateDescendants(parent)
             for _, obj in ipairs(parent:GetDescendants()) do
                 if obj.Name == "Fill" and obj:IsA("Frame") then
@@ -1447,3 +1658,6 @@ function PrimordialUI:CreateWindow(config)
 end -- CreateWindow
 
 return PrimordialUI
+
+                    return Section
+                end -- AddSection
