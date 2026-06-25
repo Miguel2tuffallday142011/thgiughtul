@@ -1303,15 +1303,21 @@ function PrimordialUI:CreateWindow(config)
 
     -- Menu keybind (RightShift by default to show/hide)
     local menuKeybind = Enum.KeyCode.RightShift
-    UserInputService.InputBegan:Connect(function(inp, gp)
-        if gp then return end
+    
+    -- Use a separate connection that ignores gameProcessed for menu toggle
+    UserInputService.InputBegan:Connect(function(inp)
+        -- Menu toggle — always fires regardless of gameProcessed
         if inp.KeyCode == menuKeybind then
             Window._main.Visible = not Window._main.Visible
         end
     end)
 
     function Window:SetMenuKey(key)
-        menuKeybind = key
+        if typeof(key) == "EnumItem" then
+            menuKeybind = key
+        elseif typeof(key) == "string" then
+            pcall(function() menuKeybind = Enum.KeyCode[key] end)
+        end
     end
 
     -- ─────────────────────────────────────────────────────────────
