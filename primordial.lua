@@ -170,6 +170,7 @@ function PrimordialUI:CreateWindow(config)
 
     -- Separator line under header
     local sep = MakeFrame(main, UDim2.new(1,0,0,1), UDim2.new(0,0,0,50), Theme.Accent)
+    sep.Name = "AccentLine"
 
     -- Content area (everything below header, above tab bar)
     local content = MakeFrame(main,
@@ -233,6 +234,7 @@ function PrimordialUI:CreateWindow(config)
         Theme.TabBar)
     local tabFix = MakeFrame(tabBar, UDim2.new(1,0,0,6), UDim2.new(0,0,0,0), Theme.TabBar)
     local tabSep = MakeFrame(tabBar, UDim2.new(1,0,0,1), UDim2.new(0,0,0,0), Theme.Accent)
+    tabSep.Name = "AccentLine"
     local tabList = Instance.new("Frame")
     tabList.Size = UDim2.new(1,0,1,0)
     tabList.BackgroundTransparency = 1
@@ -508,16 +510,27 @@ function PrimordialUI:CreateWindow(config)
                 stColHolder.Visible = false
                 stColHolder.Parent = Page._colScroll
 
+                -- Use UIListLayout so columns flow left to right
+                local stColList = Instance.new("UIListLayout")
+                stColList.FillDirection = Enum.FillDirection.Horizontal
+                stColList.Padding = UDim.new(0, 8)
+                stColList.HorizontalAlignment = Enum.HorizontalAlignment.Left
+                stColList.VerticalAlignment = Enum.VerticalAlignment.Top
+                stColList.SortOrder = Enum.SortOrder.LayoutOrder
+                stColList.Parent = stColHolder
+
+                -- Left column: always 50% so right column can sit beside it
                 local stLeftHolder = MakeFrame(stColHolder,
-                    UDim2.new(1, 0, 0, 0), UDim2.new(0,0,0,0), Theme.BG)
-                stLeftHolder.AnchorPoint = Vector2.new(0,0)
+                    UDim2.new(0.5, -4, 0, 0), UDim2.new(0,0,0,0), Theme.BG)
+                stLeftHolder.LayoutOrder = 1
                 stLeftHolder.AutomaticSize = Enum.AutomaticSize.Y
                 MakeListLayout(stLeftHolder, Enum.FillDirection.Vertical, 8)
                 SubTab._leftHolder = stLeftHolder
 
+                -- Right column: same size, hidden until used
                 local stRightHolder = MakeFrame(stColHolder,
-                    UDim2.new(0.5, -4, 0, 0), UDim2.new(0.5, 4, 0, 0), Theme.BG)
-                stRightHolder.AnchorPoint = Vector2.new(0,0)
+                    UDim2.new(0.5, -4, 0, 0), UDim2.new(0,0,0,0), Theme.BG)
+                stRightHolder.LayoutOrder = 2
                 stRightHolder.AutomaticSize = Enum.AutomaticSize.Y
                 stRightHolder.Visible = false
                 MakeListLayout(stRightHolder, Enum.FillDirection.Vertical, 8)
@@ -567,11 +580,9 @@ function PrimordialUI:CreateWindow(config)
                     local sTitle = config.Title or "Section"
                     local side   = config.Side  or "Left"
 
-                    -- First right section: switch to two-column layout
+                    -- First right section: show the right column
                     if side == "Right" and not SubTab._hasTwoCols then
                         SubTab._hasTwoCols = true
-                        SubTab._leftHolder.Size = UDim2.new(0.5, -4, 0, 0)
-                        SubTab._rightHolder.Size = UDim2.new(0.5, -4, 0, 0)
                         SubTab._rightHolder.Visible = true
                     end
 
@@ -579,12 +590,15 @@ function PrimordialUI:CreateWindow(config)
 
                     local Section = {}
 
-                    local box = MakeFrame(holder, UDim2.fromOffset(0, 0), nil, Theme.BGTertiary)
-                    box.Size = UDim2.new(1, 0, 0, 0)
-                    box.AutomaticSize = Enum.AutomaticSize.Y
+                    local box = Instance.new("Frame")
+                    box.AutomaticSize = Enum.AutomaticSize.XY
+                    box.BackgroundColor3 = Theme.BGTertiary
+                    box.BorderSizePixel = 0
+                    box.Size = UDim2.fromOffset(0,0)
+                    box.Parent = holder
                     MakeCorner(box, 6)
                     MakePadding(box, 10, 10, 10, 10)
-                    local boxList = MakeListLayout(box, Enum.FillDirection.Vertical, 8)
+                    MakeListLayout(box, Enum.FillDirection.Vertical, 8)
 
                     -- Section title
                     local titleRow = MakeFrame(box, UDim2.new(1,0,0,16), nil, Theme.BGTertiary)
@@ -593,6 +607,7 @@ function PrimordialUI:CreateWindow(config)
                         Theme.TextSecond, Enum.Font.GothamBold, 12)
                     -- Divider line after title
                     local div = MakeFrame(box, UDim2.new(1,0,0,1), nil, Theme.Accent)
+                    div.Name = "AccentLine"
 
                     Section._box = box
 
@@ -1216,9 +1231,6 @@ function PrimordialUI:CreateWindow(config)
                         return CP
                     end
 
-                    return Section
-                end -- AddSection
-
                 return SubTab
             end -- AddSubTab
 
@@ -1307,37 +1319,40 @@ function PrimordialUI:CreateWindow(config)
     function Window:SetAccent(color)
         Theme.Accent = color
         Theme.SliderFill = color
-        -- Recursively update all descendants with accent color
+        -- Update title color
+        if titleLabel then titleLabel.TextColor3 = color end        -- Recursively update all accent-colored elements
         local function updateDescendants(parent)
             for _, obj in ipairs(parent:GetDescendants()) do
-                -- Update slider fills
                 if obj.Name == "Fill" and obj:IsA("Frame") then
                     obj.BackgroundColor3 = color
                 end
-                -- Update tab indicators
                 if obj.Name == "Indicator" and obj:IsA("Frame") then
                     obj.BackgroundColor3 = color
                 end
-                -- Update sub-tab underlines
                 if obj.Name == "Underline" and obj:IsA("Frame") then
                     obj.BackgroundColor3 = color
                 end
-                -- Update scrollbar
                 if obj:IsA("ScrollingFrame") then
                     obj.ScrollBarImageColor3 = color
                 end
-                -- Update sidebar accent bars
                 if obj.Name == "SideAccent" and obj:IsA("Frame") then
+                    obj.BackgroundColor3 = color
+                end
+                -- Separator lines (header sep, tab bar sep, section divs)
+                if obj.Name == "AccentLine" and obj:IsA("Frame") then
                     obj.BackgroundColor3 = color
                 end
             end
         end
         pcall(function() updateDescendants(Window._main) end)
-        -- Update tab indicators explicitly
-        for _, t in ipairs(Window._tabs) do
-            if t._indicator then
-                t._indicator.BackgroundColor3 = color
+        -- Update separator lines on main
+        for _, obj in ipairs(main:GetChildren()) do
+            if obj:IsA("Frame") and obj.Size.Y.Offset == 1 then
+                obj.BackgroundColor3 = color
             end
+        end
+        for _, t in ipairs(Window._tabs) do
+            if t._indicator then t._indicator.BackgroundColor3 = color end
         end
     end
 
