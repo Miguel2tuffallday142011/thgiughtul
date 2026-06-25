@@ -307,8 +307,8 @@ function PrimordialUI:CreateWindow(config)
         indicator.Visible = false
 
         local tabContent = MakeFrame(Window._content,
-            UDim2.new(1,0,1,0),
-            UDim2.new(0,0,0,0),
+            UDim2.new(1,-151,1,0),
+            UDim2.new(0,151,0,0),
             Theme.BG)
         tabContent.Visible = false
         Tab._frame = tabContent
