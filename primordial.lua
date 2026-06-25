@@ -302,6 +302,7 @@ function PrimordialUI:CreateWindow(config)
             UDim2.new(0.6,0,0,2),
             UDim2.new(0.2,0,0,0),
             Theme.Accent)
+        indicator.Name = "Indicator"
         MakeCorner(indicator, 1)
         indicator.Visible = false
 
@@ -395,6 +396,7 @@ function PrimordialUI:CreateWindow(config)
                 UDim2.new(0,3,0.6,0),
                 UDim2.new(0,0,0.2,0),
                 Theme.Accent)
+            sideAccent.Name = "SideAccent"
             MakeCorner(sideAccent, 2)
             sideAccent.Visible = false
 
@@ -438,6 +440,7 @@ function PrimordialUI:CreateWindow(config)
             colScroll.ScrollBarImageColor3 = Theme.Accent
             colScroll.CanvasSize = UDim2.new(0,0,0,0)
             colScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+            colScroll.Name = "ColScroll"
             colScroll.Parent = pageFrame
             Page._colScroll = colScroll
 
@@ -531,6 +534,7 @@ function PrimordialUI:CreateWindow(config)
                     UDim2.new(0.7,0,0,2),
                     UDim2.new(0.15,0,1,-2),
                     Theme.Accent)
+                stUnderline.Name = "Underline"
                 stUnderline.Visible = false
 
                 -- SubTab frames (left and right column content)
@@ -688,6 +692,7 @@ function PrimordialUI:CreateWindow(config)
                         local track = MakeFrame(row, UDim2.new(1,0,0,4), UDim2.new(0,0,0,24), Theme.SliderBG)
                         MakeCorner(track, 2)
                         local fill = MakeFrame(track, UDim2.new(0,0,1,0), nil, Theme.SliderFill)
+                        fill.Name = "Fill"
                         MakeCorner(fill, 2)
 
                         local value = default
@@ -699,7 +704,7 @@ function PrimordialUI:CreateWindow(config)
                         end
                         updateUI()
 
-                        local dragging = false
+                        local sliderDragging = false
                         local function applyDrag(x)
                             local rel = math.clamp((x - track.AbsolutePosition.X) / track.AbsoluteSize.X, 0, 1)
                             local raw = min + (max - min) * rel
@@ -709,15 +714,22 @@ function PrimordialUI:CreateWindow(config)
                             callback(value)
                         end
 
-                        track.InputBegan:Connect(function(inp)
+                        local sliderBtn = Instance.new("TextButton")
+                        sliderBtn.Size = UDim2.new(1,0,1,0)
+                        sliderBtn.BackgroundTransparency = 1
+                        sliderBtn.Text = ""
+                        sliderBtn.ZIndex = 5
+                        sliderBtn.Parent = track
+
+                        sliderBtn.InputBegan:Connect(function(inp)
                             if inp.UserInputType == Enum.UserInputType.MouseButton1 or
                                inp.UserInputType == Enum.UserInputType.Touch then
-                                dragging = true
+                                sliderDragging = true
                                 applyDrag(inp.Position.X)
                             end
                         end)
                         UserInputService.InputChanged:Connect(function(inp)
-                            if not dragging then return end
+                            if not sliderDragging then return end
                             if inp.UserInputType == Enum.UserInputType.MouseMovement or
                                inp.UserInputType == Enum.UserInputType.Touch then
                                 applyDrag(inp.Position.X)
@@ -726,7 +738,7 @@ function PrimordialUI:CreateWindow(config)
                         UserInputService.InputEnded:Connect(function(inp)
                             if inp.UserInputType == Enum.UserInputType.MouseButton1 or
                                inp.UserInputType == Enum.UserInputType.Touch then
-                                dragging = false
+                                sliderDragging = false
                             end
                         end)
 
@@ -786,9 +798,11 @@ function PrimordialUI:CreateWindow(config)
                             isOpen = true
                             arrow.Text = "▴"
 
+                            local listH = #options * 24 + 4
+                            -- Open above the button
                             dropList = MakeFrame(row,
-                                UDim2.new(1,0,0, #options * 24 + 4),
-                                UDim2.new(0,0,0,44),
+                                UDim2.new(1,0,0, listH),
+                                UDim2.new(0,0,0, -(listH + 2)),
                                 Theme.BGItem)
                             dropList.ZIndex = 10
                             MakeCorner(dropList, 4)
@@ -1265,28 +1279,41 @@ function PrimordialUI:CreateWindow(config)
     -- ─────────────────────────────────────────────────────────────
     -- ACCENT COLOR CHANGER
     -- ─────────────────────────────────────────────────────────────
-    local accentObjects = {}  -- store all objects that use accent color
     function Window:SetAccent(color)
         Theme.Accent = color
         Theme.SliderFill = color
-        -- Update all registered accent objects
-        for _, obj in ipairs(accentObjects) do
-            pcall(function()
-                if obj and obj.Parent then
+        -- Recursively update all descendants with accent color
+        local function updateDescendants(parent)
+            for _, obj in ipairs(parent:GetDescendants()) do
+                -- Update slider fills
+                if obj.Name == "Fill" and obj:IsA("Frame") then
                     obj.BackgroundColor3 = color
                 end
-            end)
-        end
-        -- Update tab indicators and active elements
-        for _, t in ipairs(Window._tabs) do
-            if t._indicator then
-                Tween(t._indicator, {BackgroundColor3 = color}, 0.2)
+                -- Update tab indicators
+                if obj.Name == "Indicator" and obj:IsA("Frame") then
+                    obj.BackgroundColor3 = color
+                end
+                -- Update sub-tab underlines
+                if obj.Name == "Underline" and obj:IsA("Frame") then
+                    obj.BackgroundColor3 = color
+                end
+                -- Update scrollbar
+                if obj:IsA("ScrollingFrame") then
+                    obj.ScrollBarImageColor3 = color
+                end
+                -- Update sidebar accent bars
+                if obj.Name == "SideAccent" and obj:IsA("Frame") then
+                    obj.BackgroundColor3 = color
+                end
             end
         end
-    end
-    -- Track accent-colored elements
-    function Window:_trackAccent(obj)
-        table.insert(accentObjects, obj)
+        pcall(function() updateDescendants(Window._main) end)
+        -- Update tab indicators explicitly
+        for _, t in ipairs(Window._tabs) do
+            if t._indicator then
+                t._indicator.BackgroundColor3 = color
+            end
+        end
     end
 
     -- ─────────────────────────────────────────────────────────────
