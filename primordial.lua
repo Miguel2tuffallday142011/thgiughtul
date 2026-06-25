@@ -464,15 +464,16 @@ function PrimordialUI:CreateWindow(config)
             colList.Parent = colHolder
             Page._colHolder = colHolder
 
-            -- Left column (fills ~half, or full if right is empty)
-            local leftCol = MakeFrame(colHolder, UDim2.new(0.5,-8,0,0), UDim2.new(0,0,0,0), Theme.BG)
+            -- Left column — full width, right column gets content if used
+            local leftCol = MakeFrame(colHolder, UDim2.new(1,0,0,0), UDim2.new(0,0,0,0), Theme.BG)
             leftCol.AutomaticSize = Enum.AutomaticSize.Y
             MakeListLayout(leftCol, Enum.FillDirection.Vertical, 8)
             Page._leftCol = leftCol
 
-            -- Right column
-            local rightCol = MakeFrame(colHolder, UDim2.new(0.5,-8,0,0), UDim2.new(0,0,0,0), Theme.BG)
+            -- Right column (overlaid, only visible when sections added to it)
+            local rightCol = MakeFrame(colHolder, UDim2.new(1,0,0,0), UDim2.new(0,0,0,0), Theme.BG)
             rightCol.AutomaticSize = Enum.AutomaticSize.Y
+            rightCol.Visible = false
             MakeListLayout(rightCol, Enum.FillDirection.Vertical, 8)
             Page._rightCol = rightCol
 
@@ -603,7 +604,19 @@ function PrimordialUI:CreateWindow(config)
                     config = config or {}
                     local sTitle = config.Title or "Section"
                     local side   = config.Side  or "Left"
-                    local holder = side == "Right" and SubTab._rightHolder or SubTab._leftHolder
+                    local page   = SubTab._page
+
+                    -- When a Right section is added, switch to two-column layout
+                    if side == "Right" and page and not page._hasTwoCol then
+                        page._hasTwoCol = true
+                        if page._leftCol then page._leftCol.Size = UDim2.new(0.5,-4,0,0) end
+                        if page._rightCol then
+                            page._rightCol.Size = UDim2.new(0.5,-4,0,0)
+                            page._rightCol.Visible = true
+                        end
+                    end
+
+                    local holder = (side == "Right" and page and page._rightCol) or (page and page._leftCol) or SubTab._leftHolder
 
                     local Section = {}
 
