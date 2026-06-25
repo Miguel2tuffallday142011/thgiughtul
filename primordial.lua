@@ -309,11 +309,19 @@ function PrimordialUI:CreateWindow(config)
                 t._indicator.Visible = false
                 Tween(t._iconL, {TextColor3 = Theme.TextDim}, 0.15)
                 Tween(t._nameL, {TextColor3 = Theme.TextDim}, 0.15)
+                -- Hide this tab's sidebar entries
+                for _, p in ipairs(t._pages) do
+                    if p._sideBtn then p._sideBtn.Visible = false end
+                end
             end
             self._frame.Visible = true
             self._indicator.Visible = true
             Tween(self._iconL, {TextColor3 = Theme.Accent}, 0.15)
             Tween(self._nameL, {TextColor3 = Theme.TextPrimary}, 0.15)
+            -- Show this tab's sidebar entries
+            for _, p in ipairs(self._pages) do
+                if p._sideBtn then p._sideBtn.Visible = true end
+            end
             Window._selTab = self
             -- Select first page
             if self._pages[1] then
@@ -468,6 +476,7 @@ function PrimordialUI:CreateWindow(config)
             Page._sideBG     = sideBG
             Page._sideTitle  = sideTitle
             Page._sideSub    = sideSub
+            Page._sideBtn    = sideBtn
 
             sideBtn.MouseButton1Click:Connect(function() Page:_activate() end)
             sideBtn.MouseEnter:Connect(function()
@@ -981,85 +990,161 @@ function PrimordialUI:CreateWindow(config)
                         local function openPicker()
                             if picker then closePicker(); return end
                             isOpen = true
-                            picker = MakeFrame(row, UDim2.fromOffset(190,180),
-                                UDim2.new(1,-192,1,4), Theme.BGItem)
-                            picker.ZIndex = 20
-                            MakeCorner(picker, 6)
-                            MakePadding(picker, 6,6,6,6)
 
-                            -- Saturation/brightness field
+                            -- Open above the swatch — use ScreenGui overlay for correct Z
+                            picker = Instance.new("Frame")
+                            picker.Size = UDim2.fromOffset(230, 230)
+                            picker.BackgroundColor3 = Theme.BGItem
+                            picker.BorderSizePixel = 0
+                            picker.ZIndex = 50
+                            MakeCorner(picker, 6)
+
+                            -- Position above the swatch in screen coords
+                            local absPos = swatchBtn.AbsolutePosition
+                            picker.Position = UDim2.fromOffset(
+                                math.clamp(absPos.X - 160, 10, 999),
+                                absPos.Y - 240)
+                            picker.Parent = sg  -- parent to ScreenGui for top Z
+
+                            MakePadding(picker, 8,8,8,8)
+
+                            -- Saturation/Brightness square (left, large)
                             local sbField = Instance.new("ImageButton")
-                            sbField.Size = UDim2.new(1,-20,1,-30)
-                            sbField.Position = UDim2.fromOffset(0,0)
-                            sbField.Image = "rbxassetid://8180999986"
-                            sbField.ImageColor3 = Color3.fromHSV((Color3.toHSV(value)))
+                            sbField.Size = UDim2.fromOffset(160, 160)
+                            sbField.Position = UDim2.fromOffset(0, 0)
+                            sbField.Image = "rbxassetid://8180999986"  -- white→transparent overlay
+                            sbField.BackgroundColor3 = Color3.fromRGB(255,0,0)
                             sbField.BorderSizePixel = 0
                             sbField.AutoButtonColor = false
-                            sbField.ZIndex = 21
+                            sbField.ZIndex = 51
                             sbField.Parent = picker
                             MakeCorner(sbField, 4)
 
-                            local h, s, v2 = Color3.toHSV(value)
-                            local sbCursor = MakeFrame(sbField, UDim2.fromOffset(8,8),
-                                UDim2.fromScale(s, 1-v2), Theme.TextPrimary)
-                            sbCursor.AnchorPoint = Vector2.new(0.5,0.5)
-                            MakeCorner(sbCursor, 4)
-                            sbCursor.ZIndex = 22
+                            -- black→transparent gradient on saturation field
+                            local blackGrad = Instance.new("UIGradient")
+                            blackGrad.Color = ColorSequence.new({
+                                ColorSequenceKeypoint.new(0, Color3.fromRGB(0,0,0)),
+                                ColorSequenceKeypoint.new(1, Color3.fromRGB(0,0,0)),
+                            })
+                            blackGrad.Transparency = NumberSequence.new({
+                                NumberSequenceKeypoint.new(0, 1),
+                                NumberSequenceKeypoint.new(1, 0),
+                            })
+                            blackGrad.Rotation = 90
+                            blackGrad.Parent = sbField
 
-                            -- Hue bar
+                            -- Saturation cursor dot
+                            local h_val, s_val, v_val = default:ToHSV()
+                            local sbCursor = MakeFrame(sbField, UDim2.fromOffset(10,10),
+                                UDim2.fromScale(s_val, 1-v_val), Theme.TextPrimary)
+                            sbCursor.AnchorPoint = Vector2.new(0.5,0.5)
+                            MakeCorner(sbCursor, 5)
+                            sbCursor.ZIndex = 53
+                            local sbInner = MakeFrame(sbCursor, UDim2.fromOffset(4,4),
+                                UDim2.new(0.5,-2,0.5,-2), Theme.BGItem)
+                            MakeCorner(sbInner, 2)
+                            sbInner.ZIndex = 54
+
+                            -- Hue bar (right side)
                             local hueBar = Instance.new("ImageButton")
-                            hueBar.Size = UDim2.new(0,12,1,-30)
-                            hueBar.Position = UDim2.new(1,-12,0,0)
+                            hueBar.Size = UDim2.fromOffset(12, 160)
+                            hueBar.Position = UDim2.fromOffset(172, 0)
                             hueBar.Image = "rbxassetid://8180989234"
                             hueBar.ScaleType = Enum.ScaleType.Crop
                             hueBar.BorderSizePixel = 0
                             hueBar.AutoButtonColor = false
-                            hueBar.ZIndex = 21
+                            hueBar.ZIndex = 51
                             hueBar.Parent = picker
                             MakeCorner(hueBar, 3)
 
-                            local hueCursor = MakeFrame(hueBar, UDim2.new(1,0,0,2),
-                                UDim2.fromScale(0, h), Theme.TextPrimary)
-                            hueCursor.ZIndex = 22
+                            local hueCursor = MakeFrame(hueBar, UDim2.new(1,4,0,3),
+                                UDim2.new(-0.2, 0, h_val, -1), Theme.TextPrimary)
+                            hueCursor.ZIndex = 52
+                            MakeCorner(hueCursor, 1)
+
+                            -- Hex input at bottom
+                            local hexFrame = MakeFrame(picker, UDim2.fromOffset(214,22),
+                                UDim2.fromOffset(0,170), Theme.BGSecondary)
+                            MakeCorner(hexFrame, 4)
+                            local hexBox = Instance.new("TextBox")
+                            hexBox.Size = UDim2.new(1,-8,1,0)
+                            hexBox.Position = UDim2.fromOffset(6,0)
+                            hexBox.BackgroundTransparency = 1
+                            hexBox.Text = "#"..string.upper(default:ToHex()).."FF"
+                            hexBox.TextColor3 = Theme.TextSecond
+                            hexBox.Font = Enum.Font.GothamBold
+                            hexBox.TextSize = 12
+                            hexBox.TextXAlignment = Enum.TextXAlignment.Left
+                            hexBox.BorderSizePixel = 0
+                            hexBox.ClearTextOnFocus = false
+                            hexBox.ZIndex = 52
+                            hexBox.Parent = hexFrame
 
                             local function applyColor()
-                                value = Color3.fromHSV(h, s, v2)
+                                value = Color3.fromHSV(h_val, s_val, v_val)
                                 swatchBtn.BackgroundColor3 = value
-                                sbField.ImageColor3 = Color3.fromHSV(h, 1, 1)
-                                sbCursor.Position = UDim2.fromScale(math.clamp(s,0,0.97), math.clamp(1-v2,0,0.97))
-                                hueCursor.Position = UDim2.fromScale(0, math.clamp(h,0,0.97))
+                                sbField.BackgroundColor3 = Color3.fromHSV(h_val, 1, 1)
+                                sbCursor.Position = UDim2.fromScale(
+                                    math.clamp(s_val, 0.01, 0.99),
+                                    math.clamp(1-v_val, 0.01, 0.99))
+                                hueCursor.Position = UDim2.new(-0.2, 0, math.clamp(h_val, 0, 0.98), -1)
+                                hexBox.Text = "#"..string.upper(value:ToHex()).."FF"
                                 callback(value)
                             end
+                            applyColor()
 
-                            local draggingSB, draggingHue = false, false
+                            local dragSB, dragHue = false, false
 
                             sbField.InputBegan:Connect(function(inp)
                                 if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-                                    draggingSB = true
+                                    dragSB = true
                                     local rel = (Vector2.new(inp.Position.X, inp.Position.Y) - sbField.AbsolutePosition) / sbField.AbsoluteSize
-                                    s = math.clamp(rel.X, 0, 1); v2 = math.clamp(1-rel.Y, 0, 1); applyColor()
+                                    s_val = math.clamp(rel.X,0,1); v_val = math.clamp(1-rel.Y,0,1); applyColor()
                                 end
                             end)
                             hueBar.InputBegan:Connect(function(inp)
                                 if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-                                    draggingHue = true
+                                    dragHue = true
                                     local rel = (inp.Position.Y - hueBar.AbsolutePosition.Y) / hueBar.AbsoluteSize.Y
-                                    h = math.clamp(rel, 0, 1); applyColor()
+                                    h_val = math.clamp(rel,0,1); applyColor()
                                 end
                             end)
                             UserInputService.InputChanged:Connect(function(inp)
                                 if inp.UserInputType ~= Enum.UserInputType.MouseMovement and inp.UserInputType ~= Enum.UserInputType.Touch then return end
-                                if draggingSB then
+                                if dragSB then
                                     local rel = (Vector2.new(inp.Position.X, inp.Position.Y) - sbField.AbsolutePosition) / sbField.AbsoluteSize
-                                    s = math.clamp(rel.X, 0, 1); v2 = math.clamp(1-rel.Y, 0, 1); applyColor()
-                                elseif draggingHue then
+                                    s_val = math.clamp(rel.X,0,1); v_val = math.clamp(1-rel.Y,0,1); applyColor()
+                                elseif dragHue then
                                     local rel = (inp.Position.Y - hueBar.AbsolutePosition.Y) / hueBar.AbsoluteSize.Y
-                                    h = math.clamp(rel, 0, 1); applyColor()
+                                    h_val = math.clamp(rel,0,1); applyColor()
                                 end
                             end)
                             UserInputService.InputEnded:Connect(function(inp)
                                 if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-                                    draggingSB = false; draggingHue = false
+                                    dragSB = false; dragHue = false
+                                end
+                            end)
+
+                            hexBox.FocusLost:Connect(function()
+                                pcall(function()
+                                    local hex = hexBox.Text:gsub("#",""):sub(1,6)
+                                    local col = Color3.fromHex(hex)
+                                    h_val, s_val, v_val = col:ToHSV()
+                                    applyColor()
+                                end)
+                            end)
+
+                            -- Close when clicking outside
+                            local closConn
+                            closConn = UserInputService.InputBegan:Connect(function(inp)
+                                if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                                    local mp = Vector2.new(inp.Position.X, inp.Position.Y)
+                                    local ap = picker.AbsolutePosition
+                                    local as = picker.AbsoluteSize
+                                    if mp.X < ap.X or mp.X > ap.X+as.X or mp.Y < ap.Y or mp.Y > ap.Y+as.Y then
+                                        closConn:Disconnect()
+                                        task.defer(closePicker)
+                                    end
                                 end
                             end)
                         end
