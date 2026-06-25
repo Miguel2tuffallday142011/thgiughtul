@@ -91,9 +91,9 @@ end
 -- ─────────────────────────────────────────────────────────────
 function PrimordialUI:CreateWindow(config)
     config = config or {}
-    local title    = config.Title    or "primordial"
+    local title    = config.Title    or "cipher"
     local subtitle = config.Subtitle or ""
-    local size     = config.Size     or Vector2.new(860, 580)
+    local size     = config.Size     or Vector2.new(760, 500)
 
     local Window = {
         _tabs     = {},
@@ -178,23 +178,6 @@ function PrimordialUI:CreateWindow(config)
         Theme.TextPrimary,
         Enum.Font.GothamBold, 16)
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-
-    -- Close button
-    local closeBtn = Instance.new("TextButton")
-    closeBtn.Size = UDim2.fromOffset(24, 24)
-    closeBtn.Position = UDim2.new(1, -36, 0, 13)
-    closeBtn.BackgroundTransparency = 1
-    closeBtn.Text = "×"
-    closeBtn.TextColor3 = Theme.TextDim
-    closeBtn.Font = Enum.Font.GothamBold
-    closeBtn.TextSize = 20
-    closeBtn.Parent = header
-    closeBtn.MouseButton1Click:Connect(function()
-        Tween(main, {Size = UDim2.fromOffset(size.X, 0)}, 0.2)
-        task.delay(0.22, function() sg:Destroy() end)
-    end)
-    closeBtn.MouseEnter:Connect(function() closeBtn.TextColor3 = Theme.TextPrimary end)
-    closeBtn.MouseLeave:Connect(function() closeBtn.TextColor3 = Theme.TextDim end)
 
     -- Separator line under header
     local sep = MakeFrame(main, UDim2.new(1,0,0,1), UDim2.new(0,0,0,50), Theme.Border)
@@ -381,21 +364,28 @@ function PrimordialUI:CreateWindow(config)
             sideBtn.BorderSizePixel = 0
             sideBtn.Parent = Window._sidebar
 
+            -- Active highlight background
+            local sideBG = MakeFrame(sideBtn,
+                UDim2.new(1,0,1,0), UDim2.new(0,0,0,0),
+                Theme.Accent)
+            sideBG.BackgroundTransparency = 1
+            MakeCorner(sideBG, 4)
+
             local sideAccent = MakeFrame(sideBtn,
                 UDim2.new(0,3,0.6,0),
-                UDim2.new(0,-6,0.2,0),
+                UDim2.new(0,0,0.2,0),
                 Theme.Accent)
             MakeCorner(sideAccent, 2)
             sideAccent.Visible = false
 
             local sideTitle = MakeLabel(sideBtn, pageName,
                 UDim2.new(1,-12,0,18),
-                UDim2.new(0,8,0,8),
+                UDim2.new(0,10,0,8),
                 Theme.TextDim, Enum.Font.GothamBold, 13)
 
             local sideSub = MakeLabel(sideBtn, pageSub,
                 UDim2.new(1,-12,0,13),
-                UDim2.new(0,8,0,26),
+                UDim2.new(0,10,0,26),
                 Theme.TextDim, Enum.Font.Gotham, 11)
 
             -- Page frame (holds sub-tab bar + columns)
@@ -458,11 +448,13 @@ function PrimordialUI:CreateWindow(config)
                 for _, p in ipairs(Tab._pages) do
                     p._frame.Visible = false
                     p._sideAccent.Visible = false
+                    p._sideBG.BackgroundTransparency = 1
                     Tween(p._sideTitle, {TextColor3 = Theme.TextDim}, 0.15)
                     Tween(p._sideSub,   {TextColor3 = Theme.TextDim}, 0.15)
                 end
                 self._frame.Visible = true
                 self._sideAccent.Visible = true
+                Tween(self._sideBG, {BackgroundTransparency = 0.88}, 0.15)
                 Tween(self._sideTitle, {TextColor3 = Theme.TextPrimary}, 0.15)
                 Tween(self._sideSub,   {TextColor3 = Theme.Accent}, 0.15)
                 Tab._selPage = self
@@ -473,6 +465,7 @@ function PrimordialUI:CreateWindow(config)
             end
 
             Page._sideAccent = sideAccent
+            Page._sideBG     = sideBG
             Page._sideTitle  = sideTitle
             Page._sideSub    = sideSub
 
@@ -905,6 +898,184 @@ function PrimordialUI:CreateWindow(config)
                     function Section:AddLabel(text)
                         return MakeLabel(box, text or "",
                             UDim2.new(1,0,0,14), nil, Theme.TextDim, Enum.Font.Gotham, 11)
+                    end
+
+                    -- ── TextBox ───────────────────────────────────────────────
+                    function Section:AddTextBox(config)
+                        config = config or {}
+                        local label    = config.Text     or "TextBox"
+                        local default  = config.Default  or ""
+                        local placeholder = config.Placeholder or "Type here..."
+                        local callback = config.Callback or function() end
+
+                        local row = MakeFrame(box, UDim2.new(1,0,0,44), nil, Theme.BGTertiary)
+                        local lbl = MakeLabel(row, label,
+                            UDim2.new(1,0,0,16), nil, Theme.TextSecond, Enum.Font.Gotham, 12)
+
+                        local tbFrame = MakeFrame(row, UDim2.new(1,0,0,22), UDim2.fromOffset(0,18), Theme.BGItem)
+                        MakeCorner(tbFrame, 4)
+                        MakePadding(tbFrame, 0,6,0,6)
+
+                        local tb = Instance.new("TextBox")
+                        tb.Size = UDim2.new(1,0,1,0)
+                        tb.BackgroundTransparency = 1
+                        tb.Text = default
+                        tb.PlaceholderText = placeholder
+                        tb.PlaceholderColor3 = Theme.TextDim
+                        tb.TextColor3 = Theme.TextPrimary
+                        tb.Font = Enum.Font.Gotham
+                        tb.TextSize = 12
+                        tb.TextXAlignment = Enum.TextXAlignment.Left
+                        tb.BorderSizePixel = 0
+                        tb.ClearTextOnFocus = false
+                        tb.Parent = tbFrame
+
+                        tb.FocusLost:Connect(function(enter)
+                            callback(tb.Text)
+                        end)
+                        tb.Focused:Connect(function()
+                            Tween(tbFrame, {BackgroundColor3 = Theme.BGSecondary}, 0.1)
+                        end)
+                        tb.FocusLost:Connect(function()
+                            Tween(tbFrame, {BackgroundColor3 = Theme.BGItem}, 0.1)
+                        end)
+
+                        local TB = {Value = default}
+                        function TB:SetValue(v)
+                            tb.Text = tostring(v)
+                            TB.Value = v
+                            callback(v)
+                        end
+                        return TB
+                    end
+
+                    -- ── ColorPicker ───────────────────────────────────────────
+                    function Section:AddColorPicker(config)
+                        config = config or {}
+                        local label    = config.Text     or "Color"
+                        local default  = config.Default  or Color3.fromRGB(255,255,255)
+                        local callback = config.Callback or function() end
+
+                        local row = MakeFrame(box, UDim2.new(1,0,0,24), nil, Theme.BGTertiary)
+                        local lbl = MakeLabel(row, label,
+                            UDim2.new(1,-44,1,0), nil, Theme.TextSecond, Enum.Font.Gotham, 12)
+
+                        local swatchBtn = Instance.new("TextButton")
+                        swatchBtn.Size = UDim2.fromOffset(30, 16)
+                        swatchBtn.Position = UDim2.new(1,-32,0.5,-8)
+                        swatchBtn.BackgroundColor3 = default
+                        swatchBtn.Text = ""
+                        swatchBtn.BorderSizePixel = 0
+                        swatchBtn.Parent = row
+                        MakeCorner(swatchBtn, 3)
+
+                        local value = default
+                        local isOpen = false
+                        local picker = nil
+
+                        local function closePicker()
+                            if picker then picker:Destroy(); picker = nil end
+                            isOpen = false
+                        end
+
+                        local function openPicker()
+                            if picker then closePicker(); return end
+                            isOpen = true
+                            picker = MakeFrame(row, UDim2.fromOffset(190,180),
+                                UDim2.new(1,-192,1,4), Theme.BGItem)
+                            picker.ZIndex = 20
+                            MakeCorner(picker, 6)
+                            MakePadding(picker, 6,6,6,6)
+
+                            -- Saturation/brightness field
+                            local sbField = Instance.new("ImageButton")
+                            sbField.Size = UDim2.new(1,-20,1,-30)
+                            sbField.Position = UDim2.fromOffset(0,0)
+                            sbField.Image = "rbxassetid://8180999986"
+                            sbField.ImageColor3 = Color3.fromHSV((Color3.toHSV(value)))
+                            sbField.BorderSizePixel = 0
+                            sbField.AutoButtonColor = false
+                            sbField.ZIndex = 21
+                            sbField.Parent = picker
+                            MakeCorner(sbField, 4)
+
+                            local h, s, v2 = Color3.toHSV(value)
+                            local sbCursor = MakeFrame(sbField, UDim2.fromOffset(8,8),
+                                UDim2.fromScale(s, 1-v2), Theme.TextPrimary)
+                            sbCursor.AnchorPoint = Vector2.new(0.5,0.5)
+                            MakeCorner(sbCursor, 4)
+                            sbCursor.ZIndex = 22
+
+                            -- Hue bar
+                            local hueBar = Instance.new("ImageButton")
+                            hueBar.Size = UDim2.new(0,12,1,-30)
+                            hueBar.Position = UDim2.new(1,-12,0,0)
+                            hueBar.Image = "rbxassetid://8180989234"
+                            hueBar.ScaleType = Enum.ScaleType.Crop
+                            hueBar.BorderSizePixel = 0
+                            hueBar.AutoButtonColor = false
+                            hueBar.ZIndex = 21
+                            hueBar.Parent = picker
+                            MakeCorner(hueBar, 3)
+
+                            local hueCursor = MakeFrame(hueBar, UDim2.new(1,0,0,2),
+                                UDim2.fromScale(0, h), Theme.TextPrimary)
+                            hueCursor.ZIndex = 22
+
+                            local function applyColor()
+                                value = Color3.fromHSV(h, s, v2)
+                                swatchBtn.BackgroundColor3 = value
+                                sbField.ImageColor3 = Color3.fromHSV(h, 1, 1)
+                                sbCursor.Position = UDim2.fromScale(math.clamp(s,0,0.97), math.clamp(1-v2,0,0.97))
+                                hueCursor.Position = UDim2.fromScale(0, math.clamp(h,0,0.97))
+                                callback(value)
+                            end
+
+                            local draggingSB, draggingHue = false, false
+
+                            sbField.InputBegan:Connect(function(inp)
+                                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                                    draggingSB = true
+                                    local rel = (Vector2.new(inp.Position.X, inp.Position.Y) - sbField.AbsolutePosition) / sbField.AbsoluteSize
+                                    s = math.clamp(rel.X, 0, 1); v2 = math.clamp(1-rel.Y, 0, 1); applyColor()
+                                end
+                            end)
+                            hueBar.InputBegan:Connect(function(inp)
+                                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                                    draggingHue = true
+                                    local rel = (inp.Position.Y - hueBar.AbsolutePosition.Y) / hueBar.AbsoluteSize.Y
+                                    h = math.clamp(rel, 0, 1); applyColor()
+                                end
+                            end)
+                            UserInputService.InputChanged:Connect(function(inp)
+                                if inp.UserInputType ~= Enum.UserInputType.MouseMovement and inp.UserInputType ~= Enum.UserInputType.Touch then return end
+                                if draggingSB then
+                                    local rel = (Vector2.new(inp.Position.X, inp.Position.Y) - sbField.AbsolutePosition) / sbField.AbsoluteSize
+                                    s = math.clamp(rel.X, 0, 1); v2 = math.clamp(1-rel.Y, 0, 1); applyColor()
+                                elseif draggingHue then
+                                    local rel = (inp.Position.Y - hueBar.AbsolutePosition.Y) / hueBar.AbsoluteSize.Y
+                                    h = math.clamp(rel, 0, 1); applyColor()
+                                end
+                            end)
+                            UserInputService.InputEnded:Connect(function(inp)
+                                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
+                                    draggingSB = false; draggingHue = false
+                                end
+                            end)
+                        end
+
+                        swatchBtn.MouseButton1Click:Connect(function()
+                            if isOpen then closePicker() else openPicker() end
+                        end)
+
+                        local CP = {Value = value}
+                        function CP:SetValue(v)
+                            value = v
+                            swatchBtn.BackgroundColor3 = v
+                            CP.Value = v
+                            callback(v)
+                        end
+                        return CP
                     end
 
                     return Section
