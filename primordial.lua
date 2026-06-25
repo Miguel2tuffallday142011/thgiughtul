@@ -459,19 +459,20 @@ function PrimordialUI:CreateWindow(config)
             local colList = Instance.new("UIListLayout")
             colList.FillDirection = Enum.FillDirection.Horizontal
             colList.Padding = UDim.new(0, 8)
+            colList.HorizontalAlignment = Enum.HorizontalAlignment.Left
             colList.VerticalAlignment = Enum.VerticalAlignment.Top
             colList.SortOrder = Enum.SortOrder.LayoutOrder
             colList.Parent = colHolder
             Page._colHolder = colHolder
 
-            -- Left column
-            local leftCol = MakeFrame(colHolder, UDim2.new(0.5,-4,0,0), UDim2.new(0,0,0,0), Theme.BG)
+            -- Left column (fills ~half, or full if right is empty)
+            local leftCol = MakeFrame(colHolder, UDim2.new(0.5,-8,0,0), UDim2.new(0,0,0,0), Theme.BG)
             leftCol.AutomaticSize = Enum.AutomaticSize.Y
             MakeListLayout(leftCol, Enum.FillDirection.Vertical, 8)
             Page._leftCol = leftCol
 
             -- Right column
-            local rightCol = MakeFrame(colHolder, UDim2.new(0.5,-4,0,0), UDim2.new(0,0,0,0), Theme.BG)
+            local rightCol = MakeFrame(colHolder, UDim2.new(0.5,-8,0,0), UDim2.new(0,0,0,0), Theme.BG)
             rightCol.AutomaticSize = Enum.AutomaticSize.Y
             MakeListLayout(rightCol, Enum.FillDirection.Vertical, 8)
             Page._rightCol = rightCol
