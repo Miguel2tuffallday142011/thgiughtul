@@ -523,10 +523,15 @@ function PrimordialUI:CreateWindow(config)
                 stUnderline.Visible = false
 
                 -- SubTab gets its OWN colHolder inside the shared colScroll
-                local stColHolder = MakeFrame(Page._colScroll,
-                    UDim2.new(1,-16,0,0), UDim2.new(0,8,0,8), Theme.BG)
+                local stColHolder = Instance.new("Frame")
+                stColHolder.Size = UDim2.new(1, -16, 0, 0)
+                stColHolder.Position = UDim2.new(0, 8, 0, 8)
+                stColHolder.AnchorPoint = Vector2.new(0, 0)
+                stColHolder.BackgroundTransparency = 1
+                stColHolder.BorderSizePixel = 0
                 stColHolder.AutomaticSize = Enum.AutomaticSize.Y
                 stColHolder.Visible = false
+                stColHolder.Parent = Page._colScroll
                 local stColList = Instance.new("UIListLayout")
                 stColList.FillDirection = Enum.FillDirection.Horizontal
                 stColList.Padding = UDim.new(0, 8)
@@ -537,12 +542,14 @@ function PrimordialUI:CreateWindow(config)
 
                 local stLeftHolder = MakeFrame(stColHolder,
                     UDim2.new(0.5,-4,0,0), UDim2.new(0,0,0,0), Theme.BG)
+                stLeftHolder.AnchorPoint = Vector2.new(0,0)
                 stLeftHolder.AutomaticSize = Enum.AutomaticSize.Y
                 MakeListLayout(stLeftHolder, Enum.FillDirection.Vertical, 8)
                 SubTab._leftHolder = stLeftHolder
 
                 local stRightHolder = MakeFrame(stColHolder,
                     UDim2.new(0.5,-4,0,0), UDim2.new(0,0,0,0), Theme.BG)
+                stRightHolder.AnchorPoint = Vector2.new(0,0)
                 stRightHolder.AutomaticSize = Enum.AutomaticSize.Y
                 MakeListLayout(stRightHolder, Enum.FillDirection.Vertical, 8)
                 SubTab._rightHolder = stRightHolder
