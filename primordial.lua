@@ -541,7 +541,7 @@ function PrimordialUI:CreateWindow(config)
                 stColList.Parent = stColHolder
 
                 local stLeftHolder = MakeFrame(stColHolder,
-                    UDim2.new(0.5,-4,0,0), UDim2.new(0,0,0,0), Theme.BG)
+                    UDim2.new(1,0,0,0), UDim2.new(0,0,0,0), Theme.BG)
                 stLeftHolder.AnchorPoint = Vector2.new(0,0)
                 stLeftHolder.AutomaticSize = Enum.AutomaticSize.Y
                 MakeListLayout(stLeftHolder, Enum.FillDirection.Vertical, 8)
@@ -551,9 +551,11 @@ function PrimordialUI:CreateWindow(config)
                     UDim2.new(0.5,-4,0,0), UDim2.new(0,0,0,0), Theme.BG)
                 stRightHolder.AnchorPoint = Vector2.new(0,0)
                 stRightHolder.AutomaticSize = Enum.AutomaticSize.Y
+                stRightHolder.Visible = false
                 MakeListLayout(stRightHolder, Enum.FillDirection.Vertical, 8)
                 SubTab._rightHolder = stRightHolder
                 SubTab._colHolder = stColHolder
+                SubTab._hasTwoCols = false
 
                 function SubTab:_activate()
                     for _, st in ipairs(Page._subTabs) do
@@ -596,6 +598,15 @@ function PrimordialUI:CreateWindow(config)
                     config = config or {}
                     local sTitle = config.Title or "Section"
                     local side   = config.Side  or "Left"
+
+                    -- First right section: switch to two-column layout
+                    if side == "Right" and not SubTab._hasTwoCols then
+                        SubTab._hasTwoCols = true
+                        SubTab._leftHolder.Size = UDim2.new(0.5,-4,0,0)
+                        SubTab._rightHolder.Size = UDim2.new(0.5,-4,0,0)
+                        SubTab._rightHolder.Visible = true
+                    end
+
                     local holder = side == "Right" and SubTab._rightHolder or SubTab._leftHolder
 
                     local Section = {}
