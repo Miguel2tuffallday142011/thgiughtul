@@ -162,10 +162,10 @@ function PrimordialUI:CreateWindow(config)
 
     local titleLabel = MakeLabel(header,
         title,
-        UDim2.fromOffset(200, 28),
+        UDim2.fromOffset(300, 28),
         UDim2.fromOffset(14, 11),
-        Theme.TextPrimary,
-        Enum.Font.GothamBold, 20)
+        Theme.Accent,
+        Enum.Font.Gotham, 22)
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 
     -- Separator line under header
@@ -1535,7 +1535,7 @@ function PrimordialUI:CreateWindow(config)
         Theme.Accent = color
         Theme.SliderFill = color
         -- Update title color
-        if titleLabel then titleLabel.TextColor3 = color end        -- Recursively update all accent-colored elements
+        titleLabel.TextColor3 = color        -- Recursively update all accent-colored elements
         local function updateDescendants(parent)
             for _, obj in ipairs(parent:GetDescendants()) do
                 if obj.Name == "Fill" and obj:IsA("Frame") then
