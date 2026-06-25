@@ -391,13 +391,6 @@ function PrimordialUI:CreateWindow(config)
             sideBtn.Visible = true  -- visible by default; Tab._activate manages visibility
             sideBtn.Parent = Window._sidebar
 
-            -- Active highlight background
-            local sideBG = MakeFrame(sideBtn,
-                UDim2.new(1,0,1,0), UDim2.new(0,0,0,0),
-                Theme.Accent)
-            sideBG.BackgroundTransparency = 1
-            MakeCorner(sideBG, 4)
-
             local sideAccent = MakeFrame(sideBtn,
                 UDim2.new(0,3,0.6,0),
                 UDim2.new(0,0,0.2,0),
@@ -405,6 +398,12 @@ function PrimordialUI:CreateWindow(config)
             sideAccent.Name = "SideAccent"
             MakeCorner(sideAccent, 2)
             sideAccent.Visible = false
+
+            local sideBG = MakeFrame(sideBtn,
+                UDim2.new(1,0,1,0), UDim2.new(0,0,0,0),
+                Theme.Accent)
+            sideBG.BackgroundTransparency = 1
+            MakeCorner(sideBG, 4)
 
             local sideTitle = MakeLabel(sideBtn, pageName,
                 UDim2.new(1,-12,0,18),
@@ -478,7 +477,6 @@ function PrimordialUI:CreateWindow(config)
             Page._rightCol = rightCol
 
             function Page:_activate()
-                -- Hide all pages in this tab
                 for _, p in ipairs(Tab._pages) do
                     p._frame.Visible = false
                     p._sideAccent.Visible = false
