@@ -419,9 +419,14 @@ function PrimordialUI:CreateWindow(config)
             pageFrame.Visible = false
             Page._frame = pageFrame
 
-            -- Sub-tab bar
-            local subBar = MakeFrame(pageFrame,
+            -- Sub-tab bar - full width background always visible
+            local subBarBG = MakeFrame(pageFrame,
                 UDim2.new(1,0,0,36),
+                UDim2.new(0,0,0,0),
+                Theme.BGSecondary)
+
+            local subBar = MakeFrame(subBarBG,
+                UDim2.new(1,0,1,0),
                 UDim2.new(0,0,0,0),
                 Theme.BGSecondary)
             MakeListLayout(subBar, Enum.FillDirection.Horizontal, 0,
