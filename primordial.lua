@@ -437,6 +437,7 @@ function PrimordialUI:CreateWindow(config)
             Page._subBar = subBar
 
             -- Column scroll area
+            -- Content scroll area (shared, sub-tabs create their own holders inside)
             local colScroll = Instance.new("ScrollingFrame")
             colScroll.Size = UDim2.new(1,0,1,-37)
             colScroll.Position = UDim2.new(0,0,0,37)
@@ -449,30 +450,8 @@ function PrimordialUI:CreateWindow(config)
             colScroll.Name = "ColScroll"
             colScroll.Parent = pageFrame
             Page._colScroll = colScroll
-
-            -- Two-column layout inside scroll
-            local colHolder = MakeFrame(colScroll, UDim2.new(1,-16,0,0), UDim2.new(0,8,0,8), Theme.BG)
-            colHolder.AutomaticSize = Enum.AutomaticSize.Y
-            local colList = Instance.new("UIListLayout")
-            colList.FillDirection = Enum.FillDirection.Horizontal
-            colList.Padding = UDim.new(0, 8)
-            colList.HorizontalAlignment = Enum.HorizontalAlignment.Left
-            colList.VerticalAlignment = Enum.VerticalAlignment.Top
-            colList.SortOrder = Enum.SortOrder.LayoutOrder
-            colList.Parent = colHolder
-            Page._colHolder = colHolder
-
-            -- Left column — always half width
-            local leftCol = MakeFrame(colHolder, UDim2.new(0.5,-4,0,0), UDim2.new(0,0,0,0), Theme.BG)
-            leftCol.AutomaticSize = Enum.AutomaticSize.Y
-            MakeListLayout(leftCol, Enum.FillDirection.Vertical, 8)
-            Page._leftCol = leftCol
-
-            -- Right column — always half width
-            local rightCol = MakeFrame(colHolder, UDim2.new(0.5,-4,0,0), UDim2.new(0,0,0,0), Theme.BG)
-            rightCol.AutomaticSize = Enum.AutomaticSize.Y
-            MakeListLayout(rightCol, Enum.FillDirection.Vertical, 8)
-            Page._rightCol = rightCol
+            Page._leftCol = colScroll   -- sub-tabs will create their own frames inside
+            Page._rightCol = colScroll  -- placeholder, not used directly
 
             function Page:_activate()
                 for _, p in ipairs(Tab._pages) do
@@ -543,31 +522,40 @@ function PrimordialUI:CreateWindow(config)
                 stUnderline.Name = "Underline"
                 stUnderline.Visible = false
 
-                -- SubTab frames (left and right column content)
-                local stLeftHolder = MakeFrame(Page._leftCol,
-                    UDim2.new(1,0,0,0), UDim2.new(0,0,0,0), Theme.BG)
+                -- SubTab gets its OWN colHolder inside the shared colScroll
+                local stColHolder = MakeFrame(Page._colScroll,
+                    UDim2.new(1,-16,0,0), UDim2.new(0,8,0,8), Theme.BG)
+                stColHolder.AutomaticSize = Enum.AutomaticSize.Y
+                stColHolder.Visible = false
+                local stColList = Instance.new("UIListLayout")
+                stColList.FillDirection = Enum.FillDirection.Horizontal
+                stColList.Padding = UDim.new(0, 8)
+                stColList.HorizontalAlignment = Enum.HorizontalAlignment.Left
+                stColList.VerticalAlignment = Enum.VerticalAlignment.Top
+                stColList.SortOrder = Enum.SortOrder.LayoutOrder
+                stColList.Parent = stColHolder
+
+                local stLeftHolder = MakeFrame(stColHolder,
+                    UDim2.new(0.5,-4,0,0), UDim2.new(0,0,0,0), Theme.BG)
                 stLeftHolder.AutomaticSize = Enum.AutomaticSize.Y
-                stLeftHolder.Visible = false
                 MakeListLayout(stLeftHolder, Enum.FillDirection.Vertical, 8)
                 SubTab._leftHolder = stLeftHolder
 
-                local stRightHolder = MakeFrame(Page._rightCol,
-                    UDim2.new(1,0,0,0), UDim2.new(0,0,0,0), Theme.BG)
+                local stRightHolder = MakeFrame(stColHolder,
+                    UDim2.new(0.5,-4,0,0), UDim2.new(0,0,0,0), Theme.BG)
                 stRightHolder.AutomaticSize = Enum.AutomaticSize.Y
-                stRightHolder.Visible = false
                 MakeListLayout(stRightHolder, Enum.FillDirection.Vertical, 8)
                 SubTab._rightHolder = stRightHolder
+                SubTab._colHolder = stColHolder
 
                 function SubTab:_activate()
                     for _, st in ipairs(Page._subTabs) do
-                        st._leftHolder.Visible  = false
-                        st._rightHolder.Visible = false
-                        st._underline.Visible   = false
+                        if st._colHolder then st._colHolder.Visible = false end
+                        st._underline.Visible = false
                         Tween(st._label, {TextColor3 = Theme.TextDim}, 0.12)
                     end
-                    self._leftHolder.Visible  = true
-                    self._rightHolder.Visible = true
-                    self._underline.Visible   = true
+                    if self._colHolder then self._colHolder.Visible = true end
+                    self._underline.Visible = true
                     Tween(self._label, {TextColor3 = Theme.TextPrimary}, 0.12)
                     Page._selSubTab = self
                 end
@@ -601,19 +589,6 @@ function PrimordialUI:CreateWindow(config)
                     config = config or {}
                     local sTitle = config.Title or "Section"
                     local side   = config.Side  or "Left"
-                    local page   = SubTab._page
-
-                    -- When a Right section is added, switch to two-column layout
-                    if side == "Right" and page and not page._hasTwoCol then
-                        page._hasTwoCol = true
-                        if page._leftCol then page._leftCol.Size = UDim2.new(0.5,-4,0,0) end
-                        if page._rightCol then
-                            page._rightCol.Size = UDim2.new(0.5,-4,0,0)
-                            page._rightCol.Visible = true
-                        end
-                    end
-
-                    -- Use per-subtab holder, NOT the shared column directly
                     local holder = side == "Right" and SubTab._rightHolder or SubTab._leftHolder
 
                     local Section = {}
