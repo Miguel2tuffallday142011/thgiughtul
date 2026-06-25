@@ -12,8 +12,7 @@ local Theme = {
     BGSecondary = Color3.fromRGB(28, 28, 28),
     BGTertiary  = Color3.fromRGB(32, 32, 32),
     BGItem      = Color3.fromRGB(38, 38, 38),
-    Accent      = Color3.fromRGB(220, 80, 80),
-    AccentDim   = Color3.fromRGB(160, 50, 50),
+    Accent      = Color3.fromRGB(220, 80, 80),    AccentDim   = Color3.fromRGB(160, 50, 50),
     TextPrimary = Color3.fromRGB(255, 255, 255),
     TextSecond  = Color3.fromRGB(160, 160, 160),
     TextDim     = Color3.fromRGB(100, 100, 100),
@@ -541,14 +540,14 @@ function PrimordialUI:CreateWindow(config)
                 stColList.Parent = stColHolder
 
                 local stLeftHolder = MakeFrame(stColHolder,
-                    UDim2.new(1,0,0,0), UDim2.new(0,0,0,0), Theme.BG)
+                    UDim2.fromOffset(300, 0), UDim2.new(0,0,0,0), Theme.BG)
                 stLeftHolder.AnchorPoint = Vector2.new(0,0)
                 stLeftHolder.AutomaticSize = Enum.AutomaticSize.Y
                 MakeListLayout(stLeftHolder, Enum.FillDirection.Vertical, 8)
                 SubTab._leftHolder = stLeftHolder
 
                 local stRightHolder = MakeFrame(stColHolder,
-                    UDim2.new(0.5,-4,0,0), UDim2.new(0,0,0,0), Theme.BG)
+                    UDim2.fromOffset(300, 0), UDim2.new(0,0,0,0), Theme.BG)
                 stRightHolder.AnchorPoint = Vector2.new(0,0)
                 stRightHolder.AutomaticSize = Enum.AutomaticSize.Y
                 stRightHolder.Visible = false
@@ -602,8 +601,8 @@ function PrimordialUI:CreateWindow(config)
                     -- First right section: switch to two-column layout
                     if side == "Right" and not SubTab._hasTwoCols then
                         SubTab._hasTwoCols = true
-                        SubTab._leftHolder.Size = UDim2.new(0.5,-4,0,0)
-                        SubTab._rightHolder.Size = UDim2.new(0.5,-4,0,0)
+                        SubTab._leftHolder.Size = UDim2.fromOffset(300, 0)
+                        SubTab._rightHolder.Size = UDim2.fromOffset(300, 0)
                         SubTab._rightHolder.Visible = true
                     end
 
@@ -611,7 +610,8 @@ function PrimordialUI:CreateWindow(config)
 
                     local Section = {}
 
-                    local box = MakeFrame(holder, UDim2.new(1,0,0,0), nil, Theme.BGTertiary)
+                    local box = MakeFrame(holder, UDim2.fromOffset(0, 0), nil, Theme.BGTertiary)
+                    box.Size = UDim2.new(1, 0, 0, 0)
                     box.AutomaticSize = Enum.AutomaticSize.Y
                     MakeCorner(box, 6)
                     MakePadding(box, 10, 10, 10, 10)
