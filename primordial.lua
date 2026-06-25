@@ -434,8 +434,6 @@ function PrimordialUI:CreateWindow(config)
             local subBar = subBarBG
             MakeListLayout(subBar, Enum.FillDirection.Horizontal, 0,
                 Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Center)
-            MakePadding(subBar, 0, 0, 0, 8)
-            MakeFrame(pageFrame, UDim2.new(1,0,0,1), UDim2.new(0,0,0,35), Theme.Border)
             Page._subBar = subBar
 
             -- Column scroll area
@@ -616,7 +614,8 @@ function PrimordialUI:CreateWindow(config)
                         end
                     end
 
-                    local holder = (side == "Right" and page and page._rightCol) or (page and page._leftCol) or SubTab._leftHolder
+                    -- Use per-subtab holder, NOT the shared column directly
+                    local holder = side == "Right" and SubTab._rightHolder or SubTab._leftHolder
 
                     local Section = {}
 
