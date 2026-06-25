@@ -12,7 +12,7 @@ local Theme = {
     BGSecondary = Color3.fromRGB(28, 28, 28),
     BGTertiary  = Color3.fromRGB(32, 32, 32),
     BGItem      = Color3.fromRGB(38, 38, 38),
-    Accent      = Color3.fromRGB(204, 70, 90),    AccentDim   = Color3.fromRGB(160, 50, 50),
+    Accent      = Color3.fromRGB(160, 50, 50),    AccentDim   = Color3.fromRGB(160, 160, 50),
     TextPrimary = Color3.fromRGB(255, 255, 255),
     TextSecond  = Color3.fromRGB(160, 160, 160),
     TextDim     = Color3.fromRGB(100, 100, 100),
@@ -508,16 +508,27 @@ function PrimordialUI:CreateWindow(config)
                 stColHolder.Visible = false
                 stColHolder.Parent = Page._colScroll
 
+                -- Use UIListLayout so columns flow left to right
+                local stColList = Instance.new("UIListLayout")
+                stColList.FillDirection = Enum.FillDirection.Horizontal
+                stColList.Padding = UDim.new(0, 8)
+                stColList.HorizontalAlignment = Enum.HorizontalAlignment.Left
+                stColList.VerticalAlignment = Enum.VerticalAlignment.Top
+                stColList.SortOrder = Enum.SortOrder.LayoutOrder
+                stColList.Parent = stColHolder
+
+                -- Left column: always 50% so right column can sit beside it
                 local stLeftHolder = MakeFrame(stColHolder,
-                    UDim2.new(1, 0, 0, 0), UDim2.new(0,0,0,0), Theme.BG)
-                stLeftHolder.AnchorPoint = Vector2.new(0,0)
+                    UDim2.new(0.5, -4, 0, 0), UDim2.new(0,0,0,0), Theme.BG)
+                stLeftHolder.LayoutOrder = 1
                 stLeftHolder.AutomaticSize = Enum.AutomaticSize.Y
                 MakeListLayout(stLeftHolder, Enum.FillDirection.Vertical, 8)
                 SubTab._leftHolder = stLeftHolder
 
+                -- Right column: same size, hidden until used
                 local stRightHolder = MakeFrame(stColHolder,
-                    UDim2.new(0.5, -4, 0, 0), UDim2.new(0.5, 4, 0, 0), Theme.BG)
-                stRightHolder.AnchorPoint = Vector2.new(0,0)
+                    UDim2.new(0.5, -4, 0, 0), UDim2.new(0,0,0,0), Theme.BG)
+                stRightHolder.LayoutOrder = 2
                 stRightHolder.AutomaticSize = Enum.AutomaticSize.Y
                 stRightHolder.Visible = false
                 MakeListLayout(stRightHolder, Enum.FillDirection.Vertical, 8)
@@ -567,11 +578,9 @@ function PrimordialUI:CreateWindow(config)
                     local sTitle = config.Title or "Section"
                     local side   = config.Side  or "Left"
 
-                    -- First right section: switch to two-column layout
+                    -- First right section: show the right column
                     if side == "Right" and not SubTab._hasTwoCols then
                         SubTab._hasTwoCols = true
-                        SubTab._leftHolder.Size = UDim2.new(0.5, -4, 0, 0)
-                        SubTab._rightHolder.Size = UDim2.new(0.5, -4, 0, 0)
                         SubTab._rightHolder.Visible = true
                     end
 
