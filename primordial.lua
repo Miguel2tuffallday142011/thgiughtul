@@ -382,7 +382,7 @@ function PrimordialUI:CreateWindow(config)
             sideBtn.BackgroundTransparency = 1
             sideBtn.Text = ""
             sideBtn.BorderSizePixel = 0
-            sideBtn.Visible = false  -- hidden until tab activated
+            sideBtn.Visible = true  -- visible by default; Tab._activate manages visibility
             sideBtn.Parent = Window._sidebar
 
             -- Active highlight background
