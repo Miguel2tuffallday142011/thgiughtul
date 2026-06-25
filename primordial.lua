@@ -92,6 +92,7 @@ end
 function PrimordialUI:CreateWindow(config)
     config = config or {}
     local title    = config.Title    or "cipher"
+    local image    = config.Image    or nil
     local subtitle = config.Subtitle or ""
     local size     = config.Size     or Vector2.new(760, 500)
 
@@ -160,16 +161,26 @@ function PrimordialUI:CreateWindow(config)
     -- Fix bottom corners of header
     local hfix = MakeFrame(header, UDim2.new(1,0,0,10), UDim2.new(0,0,1,-10), Theme.BGSecondary)
 
-    -- Logo icon (X symbol using text)
-    local logoIcon = Instance.new("TextLabel")
-    logoIcon.Size = UDim2.fromOffset(28, 28)
-    logoIcon.Position = UDim2.fromOffset(16, 11)
-    logoIcon.BackgroundTransparency = 1
-    logoIcon.Text = "⊗"
-    logoIcon.TextColor3 = Theme.Accent
-    logoIcon.Font = Enum.Font.GothamBold
-    logoIcon.TextSize = 22
-    logoIcon.Parent = header
+    -- Logo: image if provided, else ⊗ text icon
+    if image then
+        local logoImg = Instance.new("ImageLabel")
+        logoImg.Size = UDim2.fromOffset(28, 28)
+        logoImg.Position = UDim2.fromOffset(14, 11)
+        logoImg.BackgroundTransparency = 1
+        logoImg.Image = image
+        logoImg.ScaleType = Enum.ScaleType.Fit
+        logoImg.Parent = header
+    else
+        local logoIcon = Instance.new("TextLabel")
+        logoIcon.Size = UDim2.fromOffset(28, 28)
+        logoIcon.Position = UDim2.fromOffset(16, 11)
+        logoIcon.BackgroundTransparency = 1
+        logoIcon.Text = "⊗"
+        logoIcon.TextColor3 = Theme.Accent
+        logoIcon.Font = Enum.Font.GothamBold
+        logoIcon.TextSize = 22
+        logoIcon.Parent = header
+    end
 
     local titleLabel = MakeLabel(header,
         title,
@@ -1248,6 +1259,116 @@ function PrimordialUI:CreateWindow(config)
             task.delay(0.35, function()
                 nFrame:Destroy()
             end)
+        end)
+    end
+
+    -- ─────────────────────────────────────────────────────────────
+    -- ACCENT COLOR CHANGER
+    -- ─────────────────────────────────────────────────────────────
+    local accentObjects = {}  -- store all objects that use accent color
+    function Window:SetAccent(color)
+        Theme.Accent = color
+        Theme.SliderFill = color
+        -- Update all registered accent objects
+        for _, obj in ipairs(accentObjects) do
+            pcall(function()
+                if obj and obj.Parent then
+                    obj.BackgroundColor3 = color
+                end
+            end)
+        end
+        -- Update tab indicators and active elements
+        for _, t in ipairs(Window._tabs) do
+            if t._indicator then
+                Tween(t._indicator, {BackgroundColor3 = color}, 0.2)
+            end
+        end
+    end
+    -- Track accent-colored elements
+    function Window:_trackAccent(obj)
+        table.insert(accentObjects, obj)
+    end
+
+    -- ─────────────────────────────────────────────────────────────
+    -- CONFIG SYSTEM (uses writefile/readfile if available)
+    -- ─────────────────────────────────────────────────────────────
+    local _configFolder = "cipher_configs"
+
+    local function ensureFolder()
+        pcall(function()
+            if not isfolder(_configFolder) then
+                makefolder(_configFolder)
+            end
+        end)
+    end
+
+    function Window:GetConfigs()
+        local list = {}
+        pcall(function()
+            ensureFolder()
+            for _, f in ipairs(listfiles(_configFolder)) do
+                local name = f:match("([^/\\]+)%.json$") or f:match("([^/\\]+)%.cfg$")
+                if name then table.insert(list, name) end
+            end
+        end)
+        return list
+    end
+
+    function Window:SaveConfig(name)
+        if not name or name == "" then return false, "No name" end
+        pcall(function()
+            ensureFolder()
+            local data = {}
+            -- Collect all item values
+            for tabName, tab in pairs(Window._tabs) do
+                for _, page in ipairs(tab._pages) do
+                    for _, sub in ipairs(page._subTabs) do
+                        for _, sec in ipairs(sub._sections or {}) do
+                            for _, item in ipairs(sec._items or {}) do
+                                if item.Flag and item.Value ~= nil then
+                                    data[item.Flag] = item.Value
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            local json = game:GetService("HttpService"):JSONEncode(data)
+            writefile(_configFolder.."/"..name..".json", json)
+        end)
+        return true
+    end
+
+    function Window:LoadConfig(name)
+        local ok = false
+        pcall(function()
+            ensureFolder()
+            local raw = readfile(_configFolder.."/"..name..".json")
+            local data = game:GetService("HttpService"):JSONDecode(raw)
+            -- Apply values (scripts register items with Flags)
+            for flag, val in pairs(data) do
+                for _, tab in ipairs(Window._tabs) do
+                    for _, page in ipairs(tab._pages) do
+                        for _, sub in ipairs(page._subTabs) do
+                            for _, sec in ipairs(sub._sections or {}) do
+                                for _, item in ipairs(sec._items or {}) do
+                                    if item.Flag == flag and item.SetValue then
+                                        pcall(function() item:SetValue(val) end)
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+            ok = true
+        end)
+        return ok
+    end
+
+    function Window:DeleteConfig(name)
+        pcall(function()
+            delfile(_configFolder.."/"..name..".json")
         end)
     end
 
