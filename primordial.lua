@@ -275,10 +275,10 @@ function PrimordialUI:CreateWindow(config)
             Theme.TextDim, Enum.Font.Gotham, 11)
         nameL.TextXAlignment = Enum.TextXAlignment.Center
 
-        -- Active indicator line at top of tab bar
+        -- Active indicator line at BOTTOM of tab bar
         local indicator = MakeFrame(btn,
             UDim2.new(0.6,0,0,2),
-            UDim2.new(0.2,0,0,0),
+            UDim2.new(0.2,0,1,-2),
             Theme.Accent)
         indicator.Name = "Indicator"
         MakeCorner(indicator, 1)
@@ -393,11 +393,10 @@ function PrimordialUI:CreateWindow(config)
                 UDim2.new(0,10,0,26),
                 Theme.TextDim, Enum.Font.Gotham, 11)
 
-            -- Page frame (holds sub-tab bar + columns)
-            -- Parent to tabContent so it hides automatically with tab
+            -- Page frame — fills tabContent (which already handles the x=151 offset)
             local pageFrame = MakeFrame(tabContent,
-                UDim2.new(1,-151,1,0),
-                UDim2.new(0,151,0,0),
+                UDim2.new(1,0,1,0),
+                UDim2.new(0,0,0,0),
                 Theme.BG)
             pageFrame.Visible = false
             Page._frame = pageFrame
