@@ -303,17 +303,17 @@ function PrimordialUI:CreateWindow(config)
 
         -- When tab activated, show its sidebar pages
         function Tab:_activate()
-            -- Hide all tabs
+            -- Hide all tabs and their sidebar entries
             for _, t in ipairs(Window._tabs) do
                 t._frame.Visible = false
                 t._indicator.Visible = false
                 Tween(t._iconL, {TextColor3 = Theme.TextDim}, 0.15)
                 Tween(t._nameL, {TextColor3 = Theme.TextDim}, 0.15)
-                -- Hide this tab's sidebar entries
                 for _, p in ipairs(t._pages) do
                     if p._sideBtn then p._sideBtn.Visible = false end
                 end
             end
+            -- Show this tab
             self._frame.Visible = true
             self._indicator.Visible = true
             Tween(self._iconL, {TextColor3 = Theme.Accent}, 0.15)
@@ -364,12 +364,13 @@ function PrimordialUI:CreateWindow(config)
 
             local Page = { _subTabs = {}, _selSubTab = nil, _tab = Tab }
 
-            -- Sidebar entry
+            -- Sidebar entry — hidden by default, shown when parent tab activates
             local sideBtn = Instance.new("TextButton")
             sideBtn.Size = UDim2.new(1,0,0,46)
             sideBtn.BackgroundTransparency = 1
             sideBtn.Text = ""
             sideBtn.BorderSizePixel = 0
+            sideBtn.Visible = false  -- hidden until tab activated
             sideBtn.Parent = Window._sidebar
 
             -- Active highlight background
@@ -397,7 +398,8 @@ function PrimordialUI:CreateWindow(config)
                 Theme.TextDim, Enum.Font.Gotham, 11)
 
             -- Page frame (holds sub-tab bar + columns)
-            local pageFrame = MakeFrame(Window._content,
+            -- Parent to tabContent so it hides automatically with tab
+            local pageFrame = MakeFrame(tabContent,
                 UDim2.new(1,-151,1,0),
                 UDim2.new(0,151,0,0),
                 Theme.BG)
@@ -1008,30 +1010,50 @@ function PrimordialUI:CreateWindow(config)
 
                             MakePadding(picker, 8,8,8,8)
 
-                            -- Saturation/Brightness square (left, large)
-                            local sbField = Instance.new("ImageButton")
+                            -- Saturation/Brightness square
+                            local sbField = Instance.new("Frame")
                             sbField.Size = UDim2.fromOffset(160, 160)
                             sbField.Position = UDim2.fromOffset(0, 0)
-                            sbField.Image = "rbxassetid://8180999986"  -- white→transparent overlay
-                            sbField.BackgroundColor3 = Color3.fromRGB(255,0,0)
+                            sbField.BackgroundColor3 = Color3.fromHSV(h_val, 1, 1)
                             sbField.BorderSizePixel = 0
-                            sbField.AutoButtonColor = false
                             sbField.ZIndex = 51
                             sbField.Parent = picker
                             MakeCorner(sbField, 4)
 
-                            -- black→transparent gradient on saturation field
-                            local blackGrad = Instance.new("UIGradient")
-                            blackGrad.Color = ColorSequence.new({
-                                ColorSequenceKeypoint.new(0, Color3.fromRGB(0,0,0)),
-                                ColorSequenceKeypoint.new(1, Color3.fromRGB(0,0,0)),
-                            })
-                            blackGrad.Transparency = NumberSequence.new({
-                                NumberSequenceKeypoint.new(0, 1),
-                                NumberSequenceKeypoint.new(1, 0),
-                            })
-                            blackGrad.Rotation = 90
+                            -- White left→right gradient (saturation)
+                            local whiteGrad = Instance.new("Frame")
+                            whiteGrad.Size = UDim2.new(1,0,1,0)
+                            whiteGrad.BackgroundColor3 = Color3.fromRGB(255,255,255)
+                            whiteGrad.BorderSizePixel = 0
+                            whiteGrad.ZIndex = 52
+                            whiteGrad.Parent = sbField
+                            MakeCorner(whiteGrad, 4)
+                            local wg = Instance.new("UIGradient")
+                            wg.Color = ColorSequence.new(Color3.fromRGB(255,255,255), Color3.fromRGB(255,255,255))
+                            wg.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,0), NumberSequenceKeypoint.new(1,1)})
+                            wg.Parent = whiteGrad
+
+                            -- Black bottom→top gradient (brightness)
+                            local blackGrad = Instance.new("Frame")
+                            blackGrad.Size = UDim2.new(1,0,1,0)
+                            blackGrad.BackgroundColor3 = Color3.fromRGB(0,0,0)
+                            blackGrad.BorderSizePixel = 0
+                            blackGrad.ZIndex = 53
                             blackGrad.Parent = sbField
+                            MakeCorner(blackGrad, 4)
+                            local bg2 = Instance.new("UIGradient")
+                            bg2.Color = ColorSequence.new(Color3.fromRGB(0,0,0), Color3.fromRGB(0,0,0))
+                            bg2.Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0,1), NumberSequenceKeypoint.new(1,0)})
+                            bg2.Rotation = 90
+                            bg2.Parent = blackGrad
+
+                            -- Make sbField clickable
+                            local sbClick = Instance.new("TextButton")
+                            sbClick.Size = UDim2.new(1,0,1,0)
+                            sbClick.BackgroundTransparency = 1
+                            sbClick.Text = ""
+                            sbClick.ZIndex = 55
+                            sbClick.Parent = sbField
 
                             -- Saturation cursor dot
                             local h_val, s_val, v_val = default:ToHSV()
@@ -1095,7 +1117,7 @@ function PrimordialUI:CreateWindow(config)
 
                             local dragSB, dragHue = false, false
 
-                            sbField.InputBegan:Connect(function(inp)
+                            sbClick.InputBegan:Connect(function(inp)
                                 if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
                                     dragSB = true
                                     local rel = (Vector2.new(inp.Position.X, inp.Position.Y) - sbField.AbsolutePosition) / sbField.AbsoluteSize
