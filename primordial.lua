@@ -514,8 +514,8 @@ function PrimordialUI:CreateWindow(config)
 
                 -- SubTab gets its OWN colHolder inside the shared colScroll
                 local stColHolder = Instance.new("Frame")
-                stColHolder.Size = UDim2.new(1, -16, 0, 0)
-                stColHolder.Position = UDim2.new(0, 8, 0, 8)
+                stColHolder.Size = UDim2.new(1, -32, 0, 0)
+                stColHolder.Position = UDim2.new(0, 16, 0, 8)
                 stColHolder.AnchorPoint = Vector2.new(0, 0)
                 stColHolder.BackgroundTransparency = 1
                 stColHolder.BorderSizePixel = 0
@@ -619,7 +619,7 @@ function PrimordialUI:CreateWindow(config)
                         UDim2.new(1,0,1,0), nil,
                         Theme.TextSecond, Enum.Font.GothamBold, 12)
                     -- Divider line after title
-                    local div = MakeFrame(box, UDim2.new(1,20,0,1), UDim2.new(0,-10,0,0), Theme.Accent)
+                    local div = MakeFrame(box, UDim2.new(1,-20,0,1), UDim2.new(0,10,0,0), Theme.Accent)
                     div.Name = "AccentLine"
 
                     Section._box = box
