@@ -1028,6 +1028,7 @@ function PrimordialUI:CreateWindow(config)
                         MakeCorner(swatchBtn, 3)
 
                         local value = default
+                        local h_val, s_val, v_val = default:ToHSV()
                         local isOpen = false
                         local picker = nil
 
@@ -1103,7 +1104,6 @@ function PrimordialUI:CreateWindow(config)
                             sbClick.Parent = sbField
 
                             -- Saturation cursor dot
-                            local h_val, s_val, v_val = default:ToHSV()
                             local sbCursor = MakeFrame(sbField, UDim2.fromOffset(10,10),
                                 UDim2.fromScale(s_val, 1-v_val), Theme.TextPrimary)
                             sbCursor.AnchorPoint = Vector2.new(0.5,0.5)
@@ -1232,8 +1232,8 @@ function PrimordialUI:CreateWindow(config)
                         return CP
                     end
 
-                return SubTab
-            end -- AddSubTab
+                    return Section
+                end -- AddSection
 
             return Page
         end -- AddPage
