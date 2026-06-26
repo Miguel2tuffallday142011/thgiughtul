@@ -537,7 +537,7 @@ function PrimordialUI:CreateWindow(config)
                     UDim2.new(0.5, -4, 0, 0), UDim2.new(0,0,0,0), Theme.BG)
                 stLeftHolder.LayoutOrder = 1
                 stLeftHolder.AutomaticSize = Enum.AutomaticSize.Y
-                MakeListLayout(stLeftHolder, Enum.FillDirection.Vertical, 12)
+                MakeListLayout(stLeftHolder, Enum.FillDirection.Vertical, 20)
                 SubTab._leftHolder = stLeftHolder
 
                 -- Right column: same size, hidden until used
@@ -546,7 +546,7 @@ function PrimordialUI:CreateWindow(config)
                 stRightHolder.LayoutOrder = 2
                 stRightHolder.AutomaticSize = Enum.AutomaticSize.Y
                 stRightHolder.Visible = false
-                MakeListLayout(stRightHolder, Enum.FillDirection.Vertical, 12)
+                MakeListLayout(stRightHolder, Enum.FillDirection.Vertical, 20)
                 SubTab._rightHolder = stRightHolder
                 SubTab._colHolder = stColHolder
                 SubTab._hasTwoCols = false
