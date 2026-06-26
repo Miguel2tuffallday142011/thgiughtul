@@ -107,6 +107,7 @@ function PrimordialUI:CreateWindow(config)
         _primaryTextElements = {},
         _notificationPosition = "BottomRight", -- Default notification position
         _notificationsEnabled = true, -- Default notification enablement
+        _toggleSwitches = {}, -- New list for toggle switch track buttons
     }
     -- ScreenGui
     local sg = Instance.new("ScreenGui")
@@ -644,6 +645,10 @@ function PrimordialUI:CreateWindow(config)
                         trackBtn.BorderSizePixel = 0
                         trackBtn.Parent = row
                         MakeCorner(trackBtn, 9)
+
+                        if default then
+                            table.insert(Window._toggleSwitches, trackBtn)
+                        end
 
                         local knob = MakeFrame(trackBtn,
                             UDim2.fromOffset(12,12),
