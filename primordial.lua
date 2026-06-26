@@ -12,8 +12,7 @@ local Theme = {
     BGSecondary = Color3.fromRGB(28, 28, 28),
     BGTertiary  = Color3.fromRGB(32, 32, 32),
     BGItem      = Color3.fromRGB(38, 38, 38),
-    Accent      = Color3.fromRGB(204, 70, 90),
-    AccentDim   = Color3.fromRGB(160, 50, 50),
+    Accent      = Color3.fromRGB(204, 70, 90),    AccentDim   = Color3.fromRGB(160, 50, 50),
     TextPrimary = Color3.fromRGB(255, 255, 255),
     TextSecond  = Color3.fromRGB(160, 160, 160),
     TextDim     = Color3.fromRGB(100, 100, 100),
@@ -1373,10 +1372,7 @@ function PrimordialUI:CreateWindow(config)
     function Window:GetConfigs()
         local list = {}
         pcall(function()
-            if not (isfolder and listfiles) then return end
-            if not isfolder(_configFolder) then
-                if makefolder then makefolder(_configFolder) end
-            end
+            ensureFolder()
             for _, f in ipairs(listfiles(_configFolder)) do
                 local name = f:match("([^/\\]+)%.json$") or f:match("([^/\\]+)%.cfg$")
                 if name then table.insert(list, name) end
@@ -1386,13 +1382,24 @@ function PrimordialUI:CreateWindow(config)
     end
 
     function Window:SaveConfig(name)
-        if not name or name == "" then return false end
+        if not name or name == "" then return false, "No name" end
         pcall(function()
-            if not (writefile and isfolder) then return end
-            if not isfolder(_configFolder) then
-                if makefolder then makefolder(_configFolder) end
-            end
+            ensureFolder()
             local data = {}
+            -- Collect all item values
+            for tabName, tab in pairs(Window._tabs) do
+                for _, page in ipairs(tab._pages) do
+                    for _, sub in ipairs(page._subTabs) do
+                        for _, sec in ipairs(sub._sections or {}) do
+                            for _, item in ipairs(sec._items or {}) do
+                                if item.Flag and item.Value ~= nil then
+                                    data[item.Flag] = item.Value
+                                end
+                            end
+                        end
+                    end
+                end
+            end
             local json = game:GetService("HttpService"):JSONEncode(data)
             writefile(_configFolder.."/"..name..".json", json)
         end)
@@ -1402,9 +1409,25 @@ function PrimordialUI:CreateWindow(config)
     function Window:LoadConfig(name)
         local ok = false
         pcall(function()
-            if not readfile then return end
+            ensureFolder()
             local raw = readfile(_configFolder.."/"..name..".json")
             local data = game:GetService("HttpService"):JSONDecode(raw)
+            -- Apply values (scripts register items with Flags)
+            for flag, val in pairs(data) do
+                for _, tab in ipairs(Window._tabs) do
+                    for _, page in ipairs(tab._pages) do
+                        for _, sub in ipairs(page._subTabs) do
+                            for _, sec in ipairs(sub._sections or {}) do
+                                for _, item in ipairs(sec._items or {}) do
+                                    if item.Flag == flag and item.SetValue then
+                                        pcall(function() item:SetValue(val) end)
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
             ok = true
         end)
         return ok
@@ -1412,9 +1435,7 @@ function PrimordialUI:CreateWindow(config)
 
     function Window:DeleteConfig(name)
         pcall(function()
-            if delfile then
-                delfile(_configFolder.."/"..name..".json")
-            end
+            delfile(_configFolder.."/"..name..".json")
         end)
     end
 
