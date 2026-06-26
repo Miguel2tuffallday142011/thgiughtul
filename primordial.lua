@@ -108,6 +108,7 @@ function PrimordialUI:CreateWindow(config)
         _notificationPosition = "BottomRight", -- Default notification position
         _notificationsEnabled = true, -- Default notification enablement
         _toggleSwitches = {}, -- New list for toggle switch track buttons
+        _registeredToggles = {}, -- New list for all Toggle objects
     }
     -- ScreenGui
     local sg = Instance.new("ScreenGui")
@@ -661,16 +662,6 @@ function PrimordialUI:CreateWindow(config)
                             Tween(trackBtn, {BackgroundColor3 = value and Theme.Accent or Theme.SliderBG}, 0.15)
                             Tween(knob, {Position = UDim2.fromOffset(value and 20 or 3, 3)}, 0.15)
                             Tween(lbl, {TextColor3 = value and Theme.TextPrimary or Theme.TextDim}, 0.15)
-                            if value then
-                                if not table.find(Window._toggleSwitches, trackBtn) then
-                                    table.insert(Window._toggleSwitches, trackBtn)
-                                end
-                            else
-                                local index = table.find(Window._toggleSwitches, trackBtn)
-                                if index then
-                                    table.remove(Window._toggleSwitches, index)
-                                end
-                            end
                         end
 
                         trackBtn.MouseButton1Click:Connect(function()
@@ -679,13 +670,14 @@ function PrimordialUI:CreateWindow(config)
                             callback(value)
                         end)
 
-                        local Toggle = {Value = value}
+                        local Toggle = {Value = value, _trackBtn = trackBtn, _lbl = lbl}
                         function Toggle:SetValue(v)
                             value = v
                             Toggle.Value = v
                             updateUI()
                             callback(v)
                         end
+                        table.insert(Window._registeredToggles, Toggle)
                         return Toggle
                     end
 
@@ -1290,6 +1282,81 @@ function PrimordialUI:CreateWindow(config)
                         return pickers
                     end
 
+                    -- ── Triple ColorPicker (for gradients) ───────────────────
+                    function Section:AddTripleColorPicker(config)
+                        config = config or {}
+                        local label    = config.Text     or "Gradient Colors"
+                        local default1 = config.Default1 or Color3.fromRGB(255,0,0)
+                        local default2 = config.Default2 or Color3.fromRGB(0,255,0)
+                        local default3 = config.Default3 or Color3.fromRGB(0,0,255)
+                        local callback = config.Callback or function() end
+
+                        local row = MakeFrame(box, UDim2.new(1,0,0,60), nil, Theme.BGTertiary)
+                        row.AutomaticSize = Enum.AutomaticSize.Y
+
+                        local lbl = MakeLabel(row, label,
+                            UDim2.new(1,0,0,14), nil, Theme.TextSecond, Enum.Font.Gotham, 12)
+
+                        local colors = {default1, default2, default3}
+                        local pickers = {}
+
+                        local function fireCallback()
+                            callback(colors[1], colors[2], colors[3])
+                        end
+
+                        local function createIndividualPicker(idx, parentRow, defaultColor)
+                            local cp = createColorPicker(parentRow, { Text = "Gradient "..idx, Default = defaultColor, Callback = function(color)
+                                colors[idx] = color
+                                fireCallback()
+                            end }, true) -- compact mode
+                            return cp
+                        end
+
+                        local colorRow1 = MakeFrame(row, UDim2.new(1,0,0,24), UDim2.fromOffset(0,16), Theme.BGTertiary)
+                        colorRow1.AutomaticSize = Enum.AutomaticSize.Y
+                        local listLayout1 = Instance.new("UIListLayout")
+                        listLayout1.FillDirection = Enum.FillDirection.Horizontal
+                        listLayout1.Padding = UDim.new(0, 8)
+                        listLayout1.HorizontalAlignment = Enum.HorizontalAlignment.Left
+                        listLayout1.Parent = colorRow1
+
+                        local cell1 = MakeFrame(colorRow1, UDim2.new(1/2, -4, 0, 24), nil, Theme.BGTertiary)
+                        cell1.LayoutOrder = 1
+                        pickers[1] = createIndividualPicker(1, cell1, default1)
+
+                        local cell2 = MakeFrame(colorRow1, UDim2.new(1/2, -4, 0, 24), nil, Theme.BGTertiary)
+                        cell2.LayoutOrder = 2
+                        pickers[2] = createIndividualPicker(2, cell2, default2)
+
+                        local colorRow2 = MakeFrame(row, UDim2.new(1,0,0,24), UDim2.fromOffset(0,16 + 24), Theme.BGTertiary)
+                        colorRow2.AutomaticSize = Enum.AutomaticSize.Y
+                        local listLayout2 = Instance.new("UIListLayout")
+                        listLayout2.FillDirection = Enum.FillDirection.Horizontal
+                        listLayout2.Padding = UDim.new(0, 8)
+                        listLayout2.HorizontalAlignment = Enum.HorizontalAlignment.Left
+                        listLayout2.Parent = colorRow2
+
+                        local cell3 = MakeFrame(colorRow2, UDim2.new(1, -8, 0, 24), nil, Theme.BGTertiary)
+                        cell3.LayoutOrder = 1
+                        pickers[3] = createIndividualPicker(3, cell3, default3)
+                        
+                        local TCP = {
+                            Value1 = colors[1],
+                            Value2 = colors[2],
+                            Value3 = colors[3],
+                        }
+                        function TCP:SetValues(c1, c2, c3)
+                            pickers[1].SetValue(c1)
+                            pickers[2].SetValue(c2)
+                            pickers[3].SetValue(c3)
+                            TCP.Value1 = c1
+                            TCP.Value2 = c2
+                            TCP.Value3 = c3
+                            fireCallback()
+                        end
+                        return TCP
+                    end
+
                     return Section
                 end -- AddSection
 
@@ -1450,8 +1517,12 @@ function PrimordialUI:CreateWindow(config)
         end
 
         -- Update toggle switches background colors
-        for _, toggleBtn in ipairs(Window._toggleSwitches) do
-            toggleBtn.BackgroundColor3 = color
+        for _, toggle in ipairs(Window._registeredToggles) do
+            if toggle.Value then -- Only update if the toggle is currently enabled
+                toggle._trackBtn.BackgroundColor3 = color
+            end
+            -- Also update the label color if needed
+            toggle._lbl.TextColor3 = toggle.Value and Theme.TextPrimary or Theme.TextDim
         end
 
         -- Recursively update all accent-colored elements
