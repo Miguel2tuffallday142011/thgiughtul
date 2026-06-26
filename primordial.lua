@@ -635,42 +635,46 @@ function PrimordialUI:CreateWindow(config)
                         local row = MakeFrame(box, UDim2.new(1,0,0,24), nil, Theme.BGTertiary)
 
                         local lbl = MakeLabel(row, label,
-                            UDim2.new(1,-44,1,0), nil,
+                            UDim2.new(1,-20,1,0), UDim2.fromOffset(20,0), -- Adjusted label position
                             default and Theme.TextPrimary or Theme.TextDim,
                             Enum.Font.Gotham, 12)
 
-                        local trackBtn = Instance.new("TextButton")
-                        trackBtn.Size = UDim2.fromOffset(36, 18)
-                        trackBtn.Position = UDim2.new(1,-38,0.5,-9)
-                        trackBtn.BackgroundColor3 = default and Theme.Accent or Theme.SliderBG
-                        trackBtn.Text = ""
-                        trackBtn.BorderSizePixel = 0
-                        trackBtn.Parent = row
-                        MakeCorner(trackBtn, 9)
+                        local checkboxFrame = MakeFrame(row,
+                            UDim2.fromOffset(14,14), -- Square checkbox size
+                            UDim2.fromOffset(0,5), -- Position at left, vertically centered
+                            Theme.BGItem) -- Checkbox background
+                        checkboxFrame.BorderSizePixel = 1
+                        checkboxFrame.BorderColor3 = Theme.Border
+                        MakeCorner(checkboxFrame, 3)
 
-                        if default then
-                            table.insert(Window._toggleSwitches, trackBtn)
-                        end
-                        local knob = MakeFrame(trackBtn,
-                            UDim2.fromOffset(12,12),
-                            UDim2.fromOffset(default and 20 or 3, 3),
-                            Theme.TextPrimary)
-                        MakeCorner(knob, 6)
+                        local checkIndicator = MakeFrame(checkboxFrame,
+                            UDim2.new(1,0,1,0),
+                            UDim2.new(0,0,0,0),
+                            Theme.Accent) -- Accent color for checked state
+                        checkIndicator.Name = "CheckIndicator"
+                        checkIndicator.Visible = default
+                        MakeCorner(checkIndicator, 2)
 
                         local value = default
                         local function updateUI()
-                            Tween(trackBtn, {BackgroundColor3 = value and Theme.Accent or Theme.SliderBG}, 0.15)
-                            Tween(knob, {Position = UDim2.fromOffset(value and 20 or 3, 3)}, 0.15)
+                            checkIndicator.Visible = value
                             Tween(lbl, {TextColor3 = value and Theme.TextPrimary or Theme.TextDim}, 0.15)
                         end
 
-                        trackBtn.MouseButton1Click:Connect(function()
+                        local clickButton = Instance.new("TextButton") -- Invisible button for clicking
+                        clickButton.Size = UDim2.new(1,0,1,0)
+                        clickButton.BackgroundTransparency = 1
+                        clickButton.Text = ""
+                        clickButton.BorderSizePixel = 0
+                        clickButton.Parent = row -- Parent to row to cover label and checkbox
+
+                        clickButton.MouseButton1Click:Connect(function()
                             value = not value
                             updateUI()
                             callback(value)
                         end)
 
-                        local Toggle = {Value = value, _trackBtn = trackBtn, _lbl = lbl}
+                        local Toggle = {Value = value, _checkboxFrame = checkboxFrame, _lbl = lbl, _checkIndicator = checkIndicator}
                         function Toggle:SetValue(v)
                             value = v
                             Toggle.Value = v
@@ -678,6 +682,8 @@ function PrimordialUI:CreateWindow(config)
                             callback(v)
                         end
                         table.insert(Window._registeredToggles, Toggle)
+                        return Toggle
+                    end
                         return Toggle
                     end
 
@@ -708,16 +714,16 @@ function PrimordialUI:CreateWindow(config)
                         fill.Name = "Fill"
                         MakeCorner(fill, 4)
 
-                        local knob = MakeFrame(track, UDim2.fromOffset(8,10), UDim2.new(0,0,0.5,-5), Theme.TextPrimary) -- Knob
+                        local knob = MakeFrame(track, UDim2.fromOffset(12,8), UDim2.new(0,0,0.5,-4), Theme.TextPrimary) -- Knob
                         knob.Name = "Knob"
-                        MakeCorner(knob, 3)
+                        MakeCorner(knob, 4)
 
                         local value = default
                         local function pct() return (value - min) / (max - min) end
                         local function updateUI()
                             local fillSizeX = pct()
                             Tween(fill, {Size = UDim2.new(fillSizeX,0,1,0)}, 0.05)
-                            Tween(knob, {Position = UDim2.new(fillSizeX, -3, 0.5, -5)}, 0.05) -- Move knob with fill
+                            Tween(knob, {Position = UDim2.new(fillSizeX, -6, 0.5, -4)}, 0.05) -- Move knob with fill
                             local fmt = decimals > 0 and string.format("%."..decimals.."f", value) or tostring(math.floor(value))
                             valLbl.Text = fmt .. suffix
                         end
@@ -890,12 +896,13 @@ function PrimordialUI:CreateWindow(config)
                             for _, opt in ipairs(options) do
                                 local optBtn = Instance.new("TextButton")
                                 optBtn.Size = UDim2.new(1,0,0,24)
-                                optBtn.BackgroundTransparency = 1
+                                optBtn.BackgroundTransparency = 0 -- Set to 0 for visible background
+                                optBtn.BackgroundColor3 = Theme.BGItem -- Default background color
                                 optBtn.Text = opt
                                 optBtn.TextColor3 = selectedValues[opt] and Theme.Accent or Theme.TextPrimary
                                 optBtn.Font = Enum.Font.Gotham
                                 optBtn.TextSize = 12
-                                optBtn.TextXAlignment = Enum.TextXAlignment.Left
+                                optBtn.TextXAlignment = Enum.TextXAlignment.Left -- Left-align text
                                 optBtn.BorderSizePixel = 0
                                 optBtn.ZIndex = 11
                                 local op = MakePadding(optBtn,0,0,0,8)
@@ -903,11 +910,9 @@ function PrimordialUI:CreateWindow(config)
 
                                 optBtn.MouseEnter:Connect(function()
                                     Tween(optBtn, {BackgroundColor3 = Theme.BGSecondary}, 0.1)
-                                    optBtn.BackgroundTransparency = 0
-                                    MakeCorner(optBtn, 4)
                                 end)
                                 optBtn.MouseLeave:Connect(function()
-                                    optBtn.BackgroundTransparency = 1
+                                    Tween(optBtn, {BackgroundColor3 = Theme.BGItem}, 0.1) -- Revert to default background
                                 end)
                                 optBtn.MouseButton1Click:Connect(function()
                                     if multiSelect then
