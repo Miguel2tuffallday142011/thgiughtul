@@ -101,8 +101,15 @@ function PrimordialUI:CreateWindow(config)
         _pages    = {},
         _selTab   = nil,
         _selPage  = nil,
+        _accentTextElements = {},
+        _keyPickerButtons = {},
+        _pageSubtitles = {},
+        _primaryTextElements = {},
+        _notificationPosition = "BottomRight", -- Default notification position
+        _notificationsEnabled = true, -- Default notification enablement
+        _toggleSwitches = {}, -- New list for toggle switch track buttons
+        _registeredToggles = {}, -- New list for all Toggle objects
     }
-
     -- ScreenGui
     local sg = Instance.new("ScreenGui")
     sg.Name = "PrimordialUI"
@@ -169,6 +176,7 @@ function PrimordialUI:CreateWindow(config)
         Enum.Font.Gotham, 22)
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
     Window._titleLabel = titleLabel
+    table.insert(Window._accentTextElements, titleLabel)
 
     -- Separator line under header
     local sep = MakeFrame(main, UDim2.new(1,0,0,1), UDim2.new(0,0,0,50), Theme.Accent)
@@ -196,7 +204,7 @@ function PrimordialUI:CreateWindow(config)
     local sideBar = MakeFrame(content,
         UDim2.new(0,1,1,0),
         UDim2.new(0,150,0,0),
-        Theme.Border)
+        Theme.Sidebar) -- Changed color to Theme.Sidebar
 
     -- Right pane (sub-tabs + columns)
     local rightPane = MakeFrame(content,
@@ -278,6 +286,7 @@ function PrimordialUI:CreateWindow(config)
             UDim2.new(0,0,0.5,3),
             Theme.TextDim, Enum.Font.Gotham, 11)
         nameL.TextXAlignment = Enum.TextXAlignment.Center
+        table.insert(Window._primaryTextElements, nameL)
 
         -- Active indicator line at BOTTOM of tab bar
         local indicator = MakeFrame(btn,
@@ -396,6 +405,7 @@ function PrimordialUI:CreateWindow(config)
                 UDim2.new(1,-12,0,13),
                 UDim2.new(0,10,0,26),
                 Theme.TextDim, Enum.Font.Gotham, 11)
+            table.insert(Window._pageSubtitles, sideSub)
 
             -- Page frame — fills tabContent (which already handles the x=151 offset)
             local pageFrame = MakeFrame(tabContent,
@@ -424,7 +434,8 @@ function PrimordialUI:CreateWindow(config)
             colScroll.Position = UDim2.new(0,0,0,37)
             colScroll.BackgroundTransparency = 1
             colScroll.BorderSizePixel = 0
-            colScroll.ScrollBarThickness = 3
+            colScroll.ScrollBarThickness = 0 -- Hidden scrollbar
+            colScroll.ScrollBarImageTransparency = 1 -- Fully hide scrollbar image
             colScroll.ScrollBarImageColor3 = Theme.Accent
             colScroll.CanvasSize = UDim2.new(0,0,0,0)
             colScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -503,8 +514,8 @@ function PrimordialUI:CreateWindow(config)
 
                 -- SubTab gets its OWN colHolder inside the shared colScroll
                 local stColHolder = Instance.new("Frame")
-                stColHolder.Size = UDim2.new(1, -16, 0, 0)
-                stColHolder.Position = UDim2.new(0, 8, 0, 8)
+                stColHolder.Size = UDim2.new(1, -32, 0, 0)
+                stColHolder.Position = UDim2.new(0, 16, 0, 8)
                 stColHolder.AnchorPoint = Vector2.new(0, 0)
                 stColHolder.BackgroundTransparency = 1
                 stColHolder.BorderSizePixel = 0
@@ -515,7 +526,7 @@ function PrimordialUI:CreateWindow(config)
                 -- Use UIListLayout so columns flow left to right
                 local stColList = Instance.new("UIListLayout")
                 stColList.FillDirection = Enum.FillDirection.Horizontal
-                stColList.Padding = UDim.new(0, 8)
+                stColList.Padding = UDim.new(0, 32)
                 stColList.HorizontalAlignment = Enum.HorizontalAlignment.Left
                 stColList.VerticalAlignment = Enum.VerticalAlignment.Top
                 stColList.SortOrder = Enum.SortOrder.LayoutOrder
@@ -523,7 +534,7 @@ function PrimordialUI:CreateWindow(config)
 
                 -- Left column: always 50% so right column can sit beside it
                 local stLeftHolder = MakeFrame(stColHolder,
-                    UDim2.new(0.5, -4, 0, 0), UDim2.new(0,0,0,0), Theme.BG)
+                    UDim2.new(0.5, -32, 0, 0), UDim2.new(0,0,0,0), Theme.BG)
                 stLeftHolder.LayoutOrder = 1
                 stLeftHolder.AutomaticSize = Enum.AutomaticSize.Y
                 MakeListLayout(stLeftHolder, Enum.FillDirection.Vertical, 8)
@@ -531,7 +542,7 @@ function PrimordialUI:CreateWindow(config)
 
                 -- Right column: same size, hidden until used
                 local stRightHolder = MakeFrame(stColHolder,
-                    UDim2.new(0.5, -4, 0, 0), UDim2.new(0,0,0,0), Theme.BG)
+                    UDim2.new(0.5, -32, 0, 0), UDim2.new(0,0,0,0), Theme.BG)
                 stRightHolder.LayoutOrder = 2
                 stRightHolder.AutomaticSize = Enum.AutomaticSize.Y
                 stRightHolder.Visible = false
@@ -608,7 +619,7 @@ function PrimordialUI:CreateWindow(config)
                         UDim2.new(1,0,1,0), nil,
                         Theme.TextSecond, Enum.Font.GothamBold, 12)
                     -- Divider line after title
-                    local div = MakeFrame(box, UDim2.new(1,0,0,1), nil, Theme.Accent)
+                    local div = MakeFrame(box, UDim2.new(1,-24,0,1), UDim2.new(0,12,0,0), Theme.Accent)
                     div.Name = "AccentLine"
 
                     Section._box = box
@@ -624,45 +635,53 @@ function PrimordialUI:CreateWindow(config)
                         local row = MakeFrame(box, UDim2.new(1,0,0,24), nil, Theme.BGTertiary)
 
                         local lbl = MakeLabel(row, label,
-                            UDim2.new(1,-44,1,0), nil,
+                            UDim2.new(1,-20,1,0), UDim2.fromOffset(20,0), -- Adjusted label position
                             default and Theme.TextPrimary or Theme.TextDim,
                             Enum.Font.Gotham, 12)
 
-                        local trackBtn = Instance.new("TextButton")
-                        trackBtn.Size = UDim2.fromOffset(36, 18)
-                        trackBtn.Position = UDim2.new(1,-38,0.5,-9)
-                        trackBtn.BackgroundColor3 = default and Theme.Accent or Theme.SliderBG
-                        trackBtn.Text = ""
-                        trackBtn.BorderSizePixel = 0
-                        trackBtn.Parent = row
-                        MakeCorner(trackBtn, 9)
+                        local checkboxFrame = MakeFrame(row,
+                            UDim2.fromOffset(14,14), -- Square checkbox size
+                            UDim2.fromOffset(0,5), -- Position at left, vertically centered
+                            Theme.BGItem) -- Checkbox background
+                        checkboxFrame.BorderSizePixel = 1
+                        checkboxFrame.BorderColor3 = Theme.Border
+                        MakeCorner(checkboxFrame, 3)
 
-                        local knob = MakeFrame(trackBtn,
-                            UDim2.fromOffset(12,12),
-                            UDim2.fromOffset(default and 20 or 3, 3),
-                            Theme.TextPrimary)
-                        MakeCorner(knob, 6)
+                        local checkIndicator = MakeFrame(checkboxFrame,
+                            UDim2.new(1,0,1,0),
+                            UDim2.new(0,0,0,0),
+                            Theme.Accent) -- Accent color for checked state
+                        checkIndicator.Name = "CheckIndicator"
+                        checkIndicator.Visible = default
+                        MakeCorner(checkIndicator, 2)
 
                         local value = default
                         local function updateUI()
-                            Tween(trackBtn, {BackgroundColor3 = value and Theme.Accent or Theme.SliderBG}, 0.15)
-                            Tween(knob, {Position = UDim2.fromOffset(value and 20 or 3, 3)}, 0.15)
+                            checkIndicator.Visible = value
                             Tween(lbl, {TextColor3 = value and Theme.TextPrimary or Theme.TextDim}, 0.15)
                         end
 
-                        trackBtn.MouseButton1Click:Connect(function()
+                        local clickButton = Instance.new("TextButton") -- Invisible button for clicking
+                        clickButton.Size = UDim2.new(1,0,1,0)
+                        clickButton.BackgroundTransparency = 1
+                        clickButton.Text = ""
+                        clickButton.BorderSizePixel = 0
+                        clickButton.Parent = row -- Parent to row to cover label and checkbox
+
+                        clickButton.MouseButton1Click:Connect(function()
                             value = not value
                             updateUI()
                             callback(value)
                         end)
 
-                        local Toggle = {Value = value}
+                        local Toggle = {Value = value, _checkboxFrame = checkboxFrame, _lbl = lbl, _checkIndicator = checkIndicator}
                         function Toggle:SetValue(v)
                             value = v
                             Toggle.Value = v
                             updateUI()
                             callback(v)
                         end
+                        table.insert(Window._registeredToggles, Toggle)
                         return Toggle
                     end
 
@@ -677,7 +696,7 @@ function PrimordialUI:CreateWindow(config)
                         local callback = config.Callback or function() end
                         local decimals = config.Decimals or 0
 
-                        local row = MakeFrame(box, UDim2.new(1,0,0,36), nil, Theme.BGTertiary)
+                        local row = MakeFrame(box, UDim2.new(1,0,0,28), nil, Theme.BGTertiary)
 
                         local topRow = MakeFrame(row, UDim2.new(1,0,0,16), nil, Theme.BGTertiary)
                         local lbl = MakeLabel(topRow, label, UDim2.new(1,-60,1,0), nil,
@@ -687,16 +706,22 @@ function PrimordialUI:CreateWindow(config)
                             Theme.TextDim, Enum.Font.GothamBold, 12)
                         valLbl.TextXAlignment = Enum.TextXAlignment.Right
 
-                        local track = MakeFrame(row, UDim2.new(1,0,0,4), UDim2.new(0,0,0,24), Theme.SliderBG)
-                        MakeCorner(track, 2)
+                        local track = MakeFrame(row, UDim2.new(1,0,0,8), UDim2.new(0,0,0,18), Theme.SliderBG)
+                        MakeCorner(track, 4)
                         local fill = MakeFrame(track, UDim2.new(0,0,1,0), nil, Theme.SliderFill)
                         fill.Name = "Fill"
-                        MakeCorner(fill, 2)
+                        MakeCorner(fill, 4)
+
+                        local knob = MakeFrame(track, UDim2.fromOffset(12,8), UDim2.new(0,0,0.5,-4), Theme.TextPrimary) -- Knob
+                        knob.Name = "Knob"
+                        MakeCorner(knob, 4)
 
                         local value = default
                         local function pct() return (value - min) / (max - min) end
                         local function updateUI()
-                            Tween(fill, {Size = UDim2.new(pct(),0,1,0)}, 0.05)
+                            local fillSizeX = pct()
+                            Tween(fill, {Size = UDim2.new(fillSizeX,0,1,0)}, 0.05)
+                            Tween(knob, {Position = UDim2.new(fillSizeX, -6, 0.5, -4)}, 0.05) -- Move knob with fill
                             local fmt = decimals > 0 and string.format("%."..decimals.."f", value) or tostring(math.floor(value))
                             valLbl.Text = fmt .. suffix
                         end
@@ -757,13 +782,15 @@ function PrimordialUI:CreateWindow(config)
                         local options  = config.Options  or {}
                         local default  = config.Default  or (options[1] or "")
                         local callback = config.Callback or function() end
+                        local multiSelect = config.MultiSelect or false
 
                         local row = MakeFrame(box, UDim2.new(1,0,0,44), nil, Theme.BGTertiary)
                         local lbl = MakeLabel(row, label,
                             UDim2.new(1,0,0,16), nil, Theme.TextSecond, Enum.Font.Gotham, 12)
 
                         local ddBtn = Instance.new("TextButton")
-                        ddBtn.Size = UDim2.new(1,0,0,24)
+                        ddBtn.Size = UDim2.new(1,0,0,0) -- Automatic size in Y
+                        ddBtn.AutomaticSize = Enum.AutomaticSize.Y
                         ddBtn.Position = UDim2.fromOffset(0,18)
                         ddBtn.BackgroundColor3 = Theme.BGItem
                         ddBtn.Text = ""
@@ -771,24 +798,74 @@ function PrimordialUI:CreateWindow(config)
                         ddBtn.Parent = row
                         MakeCorner(ddBtn, 4)
 
-                        local selectedL = MakeLabel(ddBtn, default,
+                        local selectedL = MakeLabel(ddBtn, "", -- Initial text will be set by updateSelectedText
                             UDim2.new(1,-24,1,0), UDim2.fromOffset(8,0),
                             Theme.TextPrimary, Enum.Font.Gotham, 12)
+                        selectedL.TextWrapped = true
+                        selectedL.TextYAlignment = Enum.TextYAlignment.Center
 
                         local arrow = MakeLabel(ddBtn, "▾",
                             UDim2.fromOffset(16,16),
-                            UDim2.new(1,-20,0,4),
+                            UDim2.new(1,-20,1,-18),
                             Theme.TextDim, Enum.Font.Gotham, 12)
                         arrow.TextXAlignment = Enum.TextXAlignment.Center
+                        arrow.TextYAlignment = Enum.TextYAlignment.Center
 
-                        local value = default
+                        local selectedValues = {}
+                        if multiSelect then
+                            -- Default can be a table of values for multi-select
+                            if type(default) == "table" then
+                                for _, v in ipairs(default) do
+                                    selectedValues[v] = true
+                                end
+                            end
+                        else
+                            -- Default is a single value for single-select
+                            selectedValues[default] = true
+                        end
+
                         local isOpen = false
                         local dropList = nil
+
+                        local function updateSelectedText()
+                            if multiSelect then
+                                local texts = {}
+                                for _, opt in ipairs(options) do
+                                    if selectedValues[opt] then
+                                        table.insert(texts, opt)
+                                    end
+                                end
+                                if #texts == 0 then
+                                    selectedL.Text = "None Selected"
+                                    selectedL.TextColor3 = Theme.TextPrimary -- No items selected, use normal text
+                                elseif #texts == #options then
+                                    selectedL.Text = "All Selected"
+                                    selectedL.TextColor3 = Theme.Accent -- All items selected, use accent color
+                                else
+                                    selectedL.Text = table.concat(texts, ", ")
+                                    selectedL.TextColor3 = Theme.Accent -- Some items selected, use accent color
+                                end
+                            else
+                                for val, isSel in pairs(selectedValues) do
+                                    if isSel then selectedL.Text = val; break end
+                                end
+                                selectedL.TextColor3 = Theme.TextPrimary -- For single select, text color remains normal
+                            end
+                        end
+                        updateSelectedText()
 
                         local function closeDropdown()
                             if dropList then dropList:Destroy(); dropList = nil end
                             isOpen = false
                             arrow.Text = "▾"
+                            -- For multi-select, callback is fired when dropdown closes
+                            if multiSelect then
+                                local currentSelections = {}
+                                for opt, isSelected in pairs(selectedValues) do
+                                    if isSelected then table.insert(currentSelections, opt) end
+                                end
+                                callback(currentSelections)
+                            end
                         end
 
                         local function openDropdown()
@@ -796,26 +873,40 @@ function PrimordialUI:CreateWindow(config)
                             isOpen = true
                             arrow.Text = "▴"
 
-                            local listH = #options * 24 + 4
-                            -- Open above the button
-                            dropList = MakeFrame(row,
+                            local listH = #options * 24 + 4 -- Moved this line here
+
+                            -- Open below the button
+                            dropList = MakeFrame(Window._sg, -- Parent to ScreenGui for absolute positioning
                                 UDim2.new(1,0,0, listH),
-                                UDim2.new(0,0,0, -(listH + 2)),
+                                UDim2.new(0,0,0,0), -- Temporary position
                                 Theme.BGItem)
-                            dropList.ZIndex = 10
+                            dropList.ZIndex = 999 -- Ensure it's always on top
                             MakeCorner(dropList, 4)
+
+                            -- Calculate absolute position for dropList
+                            local ddBtnAbsPos = ddBtn.AbsolutePosition
+                            local ddBtnAbsSize = ddBtn.AbsoluteSize
+
+                            -- Position dropList directly below ddBtn, matching ddBtn's X and width
+                            dropList.Position = UDim2.fromOffset(
+                                ddBtnAbsPos.X,
+                                ddBtnAbsPos.Y + ddBtnAbsSize.Y + 2 -- +2 for a small gap below the button
+                            )
+                            dropList.Size = UDim2.fromOffset(ddBtnAbsSize.X, listH) -- Match width of ddBtn
+
                             MakePadding(dropList, 2,2,2,2)
                             MakeListLayout(dropList, Enum.FillDirection.Vertical, 0)
 
                             for _, opt in ipairs(options) do
                                 local optBtn = Instance.new("TextButton")
                                 optBtn.Size = UDim2.new(1,0,0,24)
-                                optBtn.BackgroundTransparency = 1
+                                optBtn.BackgroundTransparency = 0 -- Set to 0 for visible background
+                                optBtn.BackgroundColor3 = Theme.BGItem -- Default background color
                                 optBtn.Text = opt
-                                optBtn.TextColor3 = opt == value and Theme.Accent or Theme.TextPrimary
+                                optBtn.TextColor3 = selectedValues[opt] and Theme.Accent or Theme.TextPrimary
                                 optBtn.Font = Enum.Font.Gotham
                                 optBtn.TextSize = 12
-                                optBtn.TextXAlignment = Enum.TextXAlignment.Left
+                                optBtn.TextXAlignment = Enum.TextXAlignment.Left -- Left-align text
                                 optBtn.BorderSizePixel = 0
                                 optBtn.ZIndex = 11
                                 local op = MakePadding(optBtn,0,0,0,8)
@@ -823,31 +914,69 @@ function PrimordialUI:CreateWindow(config)
 
                                 optBtn.MouseEnter:Connect(function()
                                     Tween(optBtn, {BackgroundColor3 = Theme.BGSecondary}, 0.1)
-                                    optBtn.BackgroundTransparency = 0
-                                    MakeCorner(optBtn, 4)
                                 end)
                                 optBtn.MouseLeave:Connect(function()
-                                    optBtn.BackgroundTransparency = 1
+                                    Tween(optBtn, {BackgroundColor3 = Theme.BGItem}, 0.1) -- Revert to default background
                                 end)
                                 optBtn.MouseButton1Click:Connect(function()
-                                    value = opt
-                                    selectedL.Text = opt
-                                    closeDropdown()
-                                    callback(opt)
+                                    if multiSelect then
+                                        selectedValues[opt] = not selectedValues[opt]
+                                        optBtn.TextColor3 = selectedValues[opt] and Theme.Accent or Theme.TextPrimary
+                                        updateSelectedText()
+                                        -- For multi-select, dropdown stays open
+                                    else
+                                        -- For single select
+                                        for val in pairs(selectedValues) do selectedValues[val] = false end -- Deselect all
+                                        selectedValues[opt] = true
+                                        updateSelectedText()
+                                        closeDropdown()
+                                        callback(opt)
+                                    end
                                 end)
                             end
+                            
+                            -- Close when clicking outside for both single and multi-select
+                            local closConn
+                            closConn = UserInputService.InputBegan:Connect(function(inp)
+                                if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                                    local mp = Vector2.new(inp.Position.X, inp.Position.Y)
+                                    local ap = dropList.AbsolutePosition
+                                    local as = dropList.AbsoluteSize
+                                    -- Only close if click is outside the dropdown and not on the main button
+                                    if (mp.X < ap.X or mp.X > ap.X+as.X or mp.Y < ap.Y or mp.Y > ap.Y+as.Y) and (mp.X < ddBtn.AbsolutePosition.X or mp.X > ddBtn.AbsolutePosition.X+ddBtn.AbsoluteSize.X or mp.Y < ddBtn.AbsolutePosition.Y or mp.Y > ddBtn.AbsolutePosition.Y+ddBtn.AbsoluteSize.Y) then
+                                        closConn:Disconnect()
+                                        task.defer(closeDropdown)
+                                    end
+                                end
+                            end)
                         end
 
                         ddBtn.MouseButton1Click:Connect(function()
                             if isOpen then closeDropdown() else openDropdown() end
                         end)
 
-                        local Dropdown = {Value = value}
+                        local Dropdown = {Value = default, SelectedValues = selectedValues}
                         function Dropdown:SetValue(v)
-                            value = v
-                            selectedL.Text = v
-                            Dropdown.Value = v
-                            callback(v)
+                            if multiSelect then
+                                -- Set values for multi-select (v should be a table)
+                                for opt in pairs(selectedValues) do selectedValues[opt] = false end -- Clear existing
+                                for _, val in ipairs(v) do
+                                    selectedValues[val] = true
+                                end
+                                updateSelectedText()
+                                local currentSelections = {}
+                                for opt, isSelected in pairs(selectedValues) do
+                                    if isSelected then table.insert(currentSelections, opt) end
+                                end
+                                callback(currentSelections)
+                            else
+                                -- Set value for single select
+                                for val in pairs(selectedValues) do selectedValues[val] = false end
+                                selectedValues[v] = true
+                                selectedL.Text = v
+                                Dropdown.Value = v
+                                callback(v)
+                            end
                         end
                         return Dropdown
                     end
@@ -875,6 +1004,7 @@ function PrimordialUI:CreateWindow(config)
                         keyBtn.BorderSizePixel = 0
                         keyBtn.Parent = row
                         MakeCorner(keyBtn, 4)
+                        table.insert(Window._keyPickerButtons, keyBtn)
 
                         local listening = false
                         local value = default
@@ -935,6 +1065,7 @@ function PrimordialUI:CreateWindow(config)
                         btn.BackgroundColor3 = Theme.BGItem
                         btn.Text = label
                         btn.TextColor3 = Theme.TextPrimary
+                        table.insert(Window._primaryTextElements, btn)
                         btn.Font = Enum.Font.GothamBold
                         btn.TextSize = 12
                         btn.BorderSizePixel = 0
@@ -982,6 +1113,7 @@ function PrimordialUI:CreateWindow(config)
                         tb.PlaceholderText = placeholder
                         tb.PlaceholderColor3 = Theme.TextDim
                         tb.TextColor3 = Theme.TextPrimary
+                        table.insert(Window._primaryTextElements, tb)
                         tb.Font = Enum.Font.Gotham
                         tb.TextSize = 12
                         tb.TextXAlignment = Enum.TextXAlignment.Left
@@ -1022,11 +1154,11 @@ function PrimordialUI:CreateWindow(config)
                             Theme.TextSecond, Enum.Font.Gotham, compact and 11 or 12)
 
                         local swatchBtn = Instance.new("TextButton")
-                        swatchBtn.Size = UDim2.fromOffset(compact and 36 or 30, compact and 18 or 16)
+                        swatchBtn.Size = UDim2.fromOffset(24, 10) -- Adjusted size for very small swatch
                         if compact then
                             swatchBtn.Position = UDim2.fromOffset(0, 16)
                         else
-                            swatchBtn.Position = UDim2.new(1,-32,0.5,-8)
+                            swatchBtn.Position = UDim2.new(1,-28,0.5,-5) -- Adjusted position
                         end
                         swatchBtn.BackgroundColor3 = default
                         swatchBtn.Text = ""
@@ -1276,32 +1408,77 @@ function PrimordialUI:CreateWindow(config)
     end -- AddTab
 
     -- Notify system
+    local NOTIFICATION_OFFSET = 10 -- Pixels from edge
+    local NOTIFICATION_WIDTH = 260
+
+    function Window:SetNotificationPosition(positionName)
+        local notifHolder = Window._sg:FindFirstChild("NotifHolder")
+        if not notifHolder then return end
+
+        local layout = notifHolder:FindFirstChildOfClass("UIListLayout")
+        if not layout then return end
+
+        Window._notificationPosition = positionName
+
+        if positionName == "TopLeft" then
+            notifHolder.AnchorPoint = Vector2.new(0, 0)
+            notifHolder.Position = UDim2.new(0, NOTIFICATION_OFFSET, 0, NOTIFICATION_OFFSET)
+            layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+            layout.VerticalAlignment = Enum.VerticalAlignment.Top
+        elseif positionName == "TopRight" then
+            notifHolder.AnchorPoint = Vector2.new(1, 0)
+            notifHolder.Position = UDim2.new(1, -NOTIFICATION_OFFSET, 0, NOTIFICATION_OFFSET)
+            layout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+            layout.VerticalAlignment = Enum.VerticalAlignment.Top
+        elseif positionName == "BottomLeft" then
+            notifHolder.AnchorPoint = Vector2.new(0, 1)
+            notifHolder.Position = UDim2.new(0, NOTIFICATION_OFFSET, 1, -NOTIFICATION_OFFSET)
+            layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+            layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+        elseif positionName == "BottomRight" then
+            notifHolder.AnchorPoint = Vector2.new(1, 1)
+            notifHolder.Position = UDim2.new(1, -NOTIFICATION_OFFSET, 1, -NOTIFICATION_OFFSET)
+            layout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+            layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+        elseif positionName == "MiddleBottom" then
+            notifHolder.AnchorPoint = Vector2.new(0.5, 1)
+            notifHolder.Position = UDim2.new(0.5, 0, 1, -NOTIFICATION_OFFSET)
+            layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+            layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+        end
+    end
+
     function Window:Notify(config)
+        if not Window._notificationsEnabled then return end
         config = config or {}
         local msg      = config.Title   or config.Text or "Notification"
         local lifetime = config.Lifetime or 3
+        local position = config.Position or Window._notificationPosition -- Use current position if not specified
 
         local notifHolder = Window._sg:FindFirstChild("NotifHolder")
         if not notifHolder then
             notifHolder = MakeFrame(Window._sg,
-                UDim2.fromOffset(260,500),
-                UDim2.new(1,-270,1,-20),
+                UDim2.fromOffset(NOTIFICATION_WIDTH, 0), -- Width is fixed, height is automatic
+                UDim2.new(0,0,0,0),
                 Theme.BG)
             notifHolder.Name = "NotifHolder"
             notifHolder.BackgroundTransparency = 1
-            notifHolder.AnchorPoint = Vector2.new(0,1)
-            notifHolder.Position = UDim2.new(1,-270,1,-10)
-            MakeListLayout(notifHolder, Enum.FillDirection.Vertical, 6,
-                Enum.HorizontalAlignment.Right, Enum.VerticalAlignment.Bottom)
+            notifHolder.AutomaticSize = Enum.AutomaticSize.Y -- Allow vertical stacking
+            -- Initial position set; will be updated by SetNotificationPosition
+            local listLayout = MakeListLayout(notifHolder, Enum.FillDirection.Vertical, 6,
+                Enum.HorizontalAlignment.Right, Enum.VerticalAlignment.Bottom) -- Default for bottom right
+            listLayout.Name = "NotificationListLayout"
         end
+        -- Always apply the current or specified position settings to the holder
+        self:SetNotificationPosition(position)
 
         local nFrame = MakeFrame(notifHolder,
-            UDim2.fromOffset(240,0), nil, Theme.BGSecondary)
+            UDim2.new(1,0,0,0), nil, Theme.BGSecondary) -- Frame fills width of holder, auto height
         nFrame.AutomaticSize = Enum.AutomaticSize.Y
         MakeCorner(nFrame, 6)
         MakePadding(nFrame, 10,12,10,12)
 
-        local accent = MakeFrame(nFrame, UDim2.fromOffset(3,0), UDim2.fromOffset(-12,-10), Theme.Accent)
+        local accent = MakeFrame(nFrame, UDim2.new(0,3,0,0), UDim2.new(0,-12,0,0), Theme.Accent)
         accent.AnchorPoint = Vector2.new(0,0)
         accent.AutomaticSize = Enum.AutomaticSize.Y
         MakeCorner(accent, 2)
@@ -1309,11 +1486,12 @@ function PrimordialUI:CreateWindow(config)
         local msgL = MakeLabel(nFrame, msg,
             UDim2.new(1,0,0,0), nil,
             Theme.TextPrimary, Enum.Font.Gotham, 12)
+        table.insert(Window._primaryTextElements, msgL)
         msgL.AutomaticSize = Enum.AutomaticSize.Y
         msgL.TextWrapped = true
 
         -- Bottom progress bar
-        local bar = MakeFrame(nFrame, UDim2.new(1,0,0,2), nil, Theme.Accent)
+        local bar = MakeFrame(nFrame, UDim2.new(1,0,0,2), UDim2.new(0,0,1,-15), Theme.Accent) -- Moved up to ensure no overlap
         bar.AnchorPoint = Vector2.new(0,0)
         Tween(bar, {Size = UDim2.new(0,0,0,2)}, lifetime, Enum.EasingStyle.Linear)
 
@@ -1327,6 +1505,10 @@ function PrimordialUI:CreateWindow(config)
                 nFrame:Destroy()
             end)
         end)
+    end
+
+    function Window:SetNotificationsEnabled(enabled)
+        Window._notificationsEnabled = enabled
     end
 
     -- Menu keybind (RightShift by default to show/hide)
@@ -1355,7 +1537,35 @@ function PrimordialUI:CreateWindow(config)
         Theme.Accent = color
         Theme.SliderFill = color
         -- Update title color
-        if titleLabel then titleLabel.TextColor3 = color end        -- Recursively update all accent-colored elements
+        if titleLabel then titleLabel.TextColor3 = color end
+
+        -- Update accent-colored text elements
+        for _, element in ipairs(Window._accentTextElements) do
+            element.TextColor3 = color
+        end
+
+        -- Update key picker button text colors
+        for _, button in ipairs(Window._keyPickerButtons) do
+            button.TextColor3 = color
+        end
+
+        -- Update active page subtitle color
+        if Window._selTab and Window._selTab._selPage and Window._selTab._selPage._sideSub then
+            Window._selTab._selPage._sideSub.TextColor3 = color
+        end
+
+        -- Update toggle switches background colors
+        for _, toggle in ipairs(Window._registeredToggles) do
+            if toggle.Value then -- Only update if the toggle is currently enabled
+                if toggle._checkIndicator then -- Check for existence of the new indicator
+                    toggle._checkIndicator.BackgroundColor3 = color
+                end
+            end
+            -- Also update the label color if needed
+            toggle._lbl.TextColor3 = toggle.Value and Theme.TextPrimary or Theme.TextDim
+        end
+
+        -- Recursively update all accent-colored elements
         local function updateDescendants(parent)
             for _, obj in ipairs(parent:GetDescendants()) do
                 if obj.Name == "Fill" and obj:IsA("Frame") then
@@ -1388,6 +1598,16 @@ function PrimordialUI:CreateWindow(config)
         end
         for _, t in ipairs(Window._tabs) do
             if t._indicator then t._indicator.BackgroundColor3 = color end
+        end
+    end
+
+    -- ─────────────────────────────────────────────────────────────
+    -- PRIMARY TEXT COLOR CHANGER
+    -- ─────────────────────────────────────────────────────────────
+    function Window:SetTextPrimaryColor(color)
+        Theme.TextPrimary = color
+        for _, element in ipairs(Window._primaryTextElements) do
+            element.TextColor3 = color
         end
     end
 
@@ -1455,5 +1675,4 @@ function PrimordialUI:CreateWindow(config)
     return Window
 end -- CreateWindow
 
-getgenv().PrimordialUI = PrimordialUI
 return PrimordialUI
