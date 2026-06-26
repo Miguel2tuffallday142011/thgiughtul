@@ -1378,7 +1378,7 @@ function PrimordialUI:CreateWindow(config)
         msgL.TextWrapped = true
 
         -- Bottom progress bar
-        local bar = MakeFrame(nFrame, UDim2.new(1,0,0,2), UDim2.new(0,0,1,-10), Theme.Accent) -- Moved up by 10 pixels
+        local bar = MakeFrame(nFrame, UDim2.new(1,0,0,2), UDim2.new(0,0,1,-15), Theme.Accent) -- Moved up to ensure no overlap
         bar.AnchorPoint = Vector2.new(0,0)
         Tween(bar, {Size = UDim2.new(0,0,0,2)}, lifetime, Enum.EasingStyle.Linear)
 
