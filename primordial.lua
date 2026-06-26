@@ -105,6 +105,8 @@ function PrimordialUI:CreateWindow(config)
         _keyPickerButtons = {},
         _pageSubtitles = {},
         _primaryTextElements = {},
+        _notificationPosition = "BottomRight", -- Default notification position
+        _notificationsEnabled = true, -- Default notification enablement
     }
     -- ScreenGui
     local sg = Instance.new("ScreenGui")
@@ -1286,32 +1288,77 @@ function PrimordialUI:CreateWindow(config)
     end -- AddTab
 
     -- Notify system
+    local NOTIFICATION_OFFSET = 10 -- Pixels from edge
+    local NOTIFICATION_WIDTH = 260
+
+    function Window:SetNotificationPosition(positionName)
+        local notifHolder = Window._sg:FindFirstChild("NotifHolder")
+        if not notifHolder then return end
+
+        local layout = notifHolder:FindFirstChildOfClass("UIListLayout")
+        if not layout then return end
+
+        Window._notificationPosition = positionName
+
+        if positionName == "TopLeft" then
+            notifHolder.AnchorPoint = Vector2.new(0, 0)
+            notifHolder.Position = UDim2.new(0, NOTIFICATION_OFFSET, 0, NOTIFICATION_OFFSET)
+            layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+            layout.VerticalAlignment = Enum.VerticalAlignment.Top
+        elseif positionName == "TopRight" then
+            notifHolder.AnchorPoint = Vector2.new(1, 0)
+            notifHolder.Position = UDim2.new(1, -NOTIFICATION_OFFSET, 0, NOTIFICATION_OFFSET)
+            layout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+            layout.VerticalAlignment = Enum.VerticalAlignment.Top
+        elseif positionName == "BottomLeft" then
+            notifHolder.AnchorPoint = Vector2.new(0, 1)
+            notifHolder.Position = UDim2.new(0, NOTIFICATION_OFFSET, 1, -NOTIFICATION_OFFSET)
+            layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+            layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+        elseif positionName == "BottomRight" then
+            notifHolder.AnchorPoint = Vector2.new(1, 1)
+            notifHolder.Position = UDim2.new(1, -NOTIFICATION_OFFSET, 1, -NOTIFICATION_OFFSET)
+            layout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+            layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+        elseif positionName == "MiddleBottom" then
+            notifHolder.AnchorPoint = Vector2.new(0.5, 1)
+            notifHolder.Position = UDim2.new(0.5, 0, 1, -NOTIFICATION_OFFSET)
+            layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+            layout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+        end
+    end
+
     function Window:Notify(config)
+        if not Window._notificationsEnabled then return end
         config = config or {}
         local msg      = config.Title   or config.Text or "Notification"
         local lifetime = config.Lifetime or 3
+        local position = config.Position or Window._notificationPosition -- Use current position if not specified
 
         local notifHolder = Window._sg:FindFirstChild("NotifHolder")
         if not notifHolder then
             notifHolder = MakeFrame(Window._sg,
-                UDim2.fromOffset(260,500),
-                UDim2.new(1,-270,1,-20),
+                UDim2.fromOffset(NOTIFICATION_WIDTH, 0), -- Width is fixed, height is automatic
+                UDim2.new(0,0,0,0),
                 Theme.BG)
             notifHolder.Name = "NotifHolder"
             notifHolder.BackgroundTransparency = 1
-            notifHolder.AnchorPoint = Vector2.new(0,1)
-            notifHolder.Position = UDim2.new(1,-270,1,-10)
-            MakeListLayout(notifHolder, Enum.FillDirection.Vertical, 6,
-                Enum.HorizontalAlignment.Right, Enum.VerticalAlignment.Bottom)
+            notifHolder.AutomaticSize = Enum.AutomaticSize.Y -- Allow vertical stacking
+            -- Initial position set; will be updated by SetNotificationPosition
+            local listLayout = MakeListLayout(notifHolder, Enum.FillDirection.Vertical, 6,
+                Enum.HorizontalAlignment.Right, Enum.VerticalAlignment.Bottom) -- Default for bottom right
+            listLayout.Name = "NotificationListLayout"
         end
+        -- Always apply the current or specified position settings to the holder
+        self:SetNotificationPosition(position)
 
         local nFrame = MakeFrame(notifHolder,
-            UDim2.fromOffset(240,0), nil, Theme.BGSecondary)
+            UDim2.new(1,0,0,0), nil, Theme.BGSecondary) -- Frame fills width of holder, auto height
         nFrame.AutomaticSize = Enum.AutomaticSize.Y
         MakeCorner(nFrame, 6)
         MakePadding(nFrame, 10,12,10,12)
 
-        local accent = MakeFrame(nFrame, UDim2.fromOffset(3,0), UDim2.fromOffset(-12,-10), Theme.Accent)
+        local accent = MakeFrame(nFrame, UDim2.new(0,3,0,0), UDim2.new(0,-12,0,0), Theme.Accent)
         accent.AnchorPoint = Vector2.new(0,0)
         accent.AutomaticSize = Enum.AutomaticSize.Y
         MakeCorner(accent, 2)
@@ -1338,6 +1385,10 @@ function PrimordialUI:CreateWindow(config)
                 nFrame:Destroy()
             end)
         end)
+    end
+
+    function Window:SetNotificationsEnabled(enabled)
+        Window._notificationsEnabled = enabled
     end
 
     -- Menu keybind (RightShift by default to show/hide)
