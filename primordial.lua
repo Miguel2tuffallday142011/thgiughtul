@@ -1557,7 +1557,9 @@ function PrimordialUI:CreateWindow(config)
         -- Update toggle switches background colors
         for _, toggle in ipairs(Window._registeredToggles) do
             if toggle.Value then -- Only update if the toggle is currently enabled
-                toggle._trackBtn.BackgroundColor3 = color
+                if toggle._checkIndicator then -- Check for existence of the new indicator
+                    toggle._checkIndicator.BackgroundColor3 = color
+                end
             end
             -- Also update the label color if needed
             toggle._lbl.TextColor3 = toggle.Value and Theme.TextPrimary or Theme.TextDim
