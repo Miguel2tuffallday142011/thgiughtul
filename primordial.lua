@@ -12,7 +12,8 @@ local Theme = {
     BGSecondary = Color3.fromRGB(28, 28, 28),
     BGTertiary  = Color3.fromRGB(32, 32, 32),
     BGItem      = Color3.fromRGB(38, 38, 38),
-    Accent      = Color3.fromRGB(204, 70, 90),    AccentDim   = Color3.fromRGB(160, 50, 50),
+    Accent      = Color3.fromRGB(220, 80, 80),
+    AccentDim   = Color3.fromRGB(160, 50, 50),
     TextPrimary = Color3.fromRGB(255, 255, 255),
     TextSecond  = Color3.fromRGB(160, 160, 160),
     TextDim     = Color3.fromRGB(100, 100, 100),
@@ -160,17 +161,37 @@ function PrimordialUI:CreateWindow(config)
     -- Fix bottom corners of header
     local hfix = MakeFrame(header, UDim2.new(1,0,0,10), UDim2.new(0,0,1,-10), Theme.BGSecondary)
 
+    -- Logo: image if provided, else ⊗ text icon
+    if image then
+        local logoImg = Instance.new("ImageLabel")
+        logoImg.Size = UDim2.fromOffset(28, 28)
+        logoImg.Position = UDim2.fromOffset(14, 11)
+        logoImg.BackgroundTransparency = 1
+        logoImg.Image = image
+        logoImg.ScaleType = Enum.ScaleType.Fit
+        logoImg.Parent = header
+    else
+        local logoIcon = Instance.new("TextLabel")
+        logoIcon.Size = UDim2.fromOffset(28, 28)
+        logoIcon.Position = UDim2.fromOffset(16, 11)
+        logoIcon.BackgroundTransparency = 1
+        logoIcon.Text = "⊗"
+        logoIcon.TextColor3 = Theme.Accent
+        logoIcon.Font = Enum.Font.GothamBold
+        logoIcon.TextSize = 22
+        logoIcon.Parent = header
+    end
+
     local titleLabel = MakeLabel(header,
         title,
         UDim2.fromOffset(200, 28),
-        UDim2.fromOffset(14, 11),
+        UDim2.fromOffset(50, 11),
         Theme.TextPrimary,
-        Enum.Font.GothamBold, 20)
+        Enum.Font.GothamBold, 16)
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 
     -- Separator line under header
-    local sep = MakeFrame(main, UDim2.new(1,0,0,1), UDim2.new(0,0,0,50), Theme.Accent)
-    sep.Name = "AccentLine"
+    local sep = MakeFrame(main, UDim2.new(1,0,0,1), UDim2.new(0,0,0,50), Theme.Border)
 
     -- Content area (everything below header, above tab bar)
     local content = MakeFrame(main,
@@ -233,8 +254,7 @@ function PrimordialUI:CreateWindow(config)
         UDim2.new(0,0,1,-48),
         Theme.TabBar)
     local tabFix = MakeFrame(tabBar, UDim2.new(1,0,0,6), UDim2.new(0,0,0,0), Theme.TabBar)
-    local tabSep = MakeFrame(tabBar, UDim2.new(1,0,0,1), UDim2.new(0,0,0,0), Theme.Accent)
-    tabSep.Name = "AccentLine"
+    local tabSep = MakeFrame(tabBar, UDim2.new(1,0,0,1), UDim2.new(0,0,0,0), Theme.Border)
     local tabList = Instance.new("Frame")
     tabList.Size = UDim2.new(1,0,1,0)
     tabList.BackgroundTransparency = 1
@@ -277,10 +297,10 @@ function PrimordialUI:CreateWindow(config)
             Theme.TextDim, Enum.Font.Gotham, 11)
         nameL.TextXAlignment = Enum.TextXAlignment.Center
 
-        -- Active indicator line at BOTTOM of tab bar
+        -- Active indicator line at top of tab bar
         local indicator = MakeFrame(btn,
             UDim2.new(0.6,0,0,2),
-            UDim2.new(0.2,0,1,-2),
+            UDim2.new(0.2,0,0,0),
             Theme.Accent)
         indicator.Name = "Indicator"
         MakeCorner(indicator, 1)
@@ -395,10 +415,11 @@ function PrimordialUI:CreateWindow(config)
                 UDim2.new(0,10,0,26),
                 Theme.TextDim, Enum.Font.Gotham, 11)
 
-            -- Page frame — fills tabContent (which already handles the x=151 offset)
+            -- Page frame (holds sub-tab bar + columns)
+            -- Parent to tabContent so it hides automatically with tab
             local pageFrame = MakeFrame(tabContent,
-                UDim2.new(1,0,1,0),
-                UDim2.new(0,0,0,0),
+                UDim2.new(1,-151,1,0),
+                UDim2.new(0,151,0,0),
                 Theme.BG)
             pageFrame.Visible = false
             Page._frame = pageFrame
@@ -413,10 +434,11 @@ function PrimordialUI:CreateWindow(config)
             local subBar = subBarBG
             MakeListLayout(subBar, Enum.FillDirection.Horizontal, 0,
                 Enum.HorizontalAlignment.Left, Enum.VerticalAlignment.Center)
+            MakePadding(subBar, 0, 0, 0, 8)
+            MakeFrame(pageFrame, UDim2.new(1,0,0,1), UDim2.new(0,0,0,35), Theme.Border)
             Page._subBar = subBar
 
             -- Column scroll area
-            -- Content scroll area (shared, sub-tabs create their own holders inside)
             local colScroll = Instance.new("ScrollingFrame")
             colScroll.Size = UDim2.new(1,0,1,-37)
             colScroll.Position = UDim2.new(0,0,0,37)
@@ -429,18 +451,42 @@ function PrimordialUI:CreateWindow(config)
             colScroll.Name = "ColScroll"
             colScroll.Parent = pageFrame
             Page._colScroll = colScroll
-            Page._leftCol = colScroll   -- sub-tabs will create their own frames inside
-            Page._rightCol = colScroll  -- placeholder, not used directly
+
+            -- Two-column layout inside scroll
+            local colHolder = MakeFrame(colScroll, UDim2.new(1,-16,0,0), UDim2.new(0,8,0,8), Theme.BG)
+            colHolder.AutomaticSize = Enum.AutomaticSize.Y
+            local colList = Instance.new("UIListLayout")
+            colList.FillDirection = Enum.FillDirection.Horizontal
+            colList.Padding = UDim.new(0, 8)
+            colList.HorizontalAlignment = Enum.HorizontalAlignment.Left
+            colList.VerticalAlignment = Enum.VerticalAlignment.Top
+            colList.SortOrder = Enum.SortOrder.LayoutOrder
+            colList.Parent = colHolder
+            Page._colHolder = colHolder
+
+            -- Left column (fills ~half, or full if right is empty)
+            local leftCol = MakeFrame(colHolder, UDim2.new(0.5,-8,0,0), UDim2.new(0,0,0,0), Theme.BG)
+            leftCol.AutomaticSize = Enum.AutomaticSize.Y
+            MakeListLayout(leftCol, Enum.FillDirection.Vertical, 8)
+            Page._leftCol = leftCol
+
+            -- Right column
+            local rightCol = MakeFrame(colHolder, UDim2.new(0.5,-8,0,0), UDim2.new(0,0,0,0), Theme.BG)
+            rightCol.AutomaticSize = Enum.AutomaticSize.Y
+            MakeListLayout(rightCol, Enum.FillDirection.Vertical, 8)
+            Page._rightCol = rightCol
 
             function Page:_activate()
                 for _, p in ipairs(Tab._pages) do
                     p._frame.Visible = false
                     p._sideAccent.Visible = false
+                    p._sideBG.BackgroundTransparency = 1
                     Tween(p._sideTitle, {TextColor3 = Theme.TextDim}, 0.15)
                     Tween(p._sideSub,   {TextColor3 = Theme.TextDim}, 0.15)
                 end
                 self._frame.Visible = true
                 self._sideAccent.Visible = true
+                Tween(self._sideBG, {BackgroundTransparency = 0.88}, 0.15)
                 Tween(self._sideTitle, {TextColor3 = Theme.TextPrimary}, 0.15)
                 Tween(self._sideSub,   {TextColor3 = Theme.Accent}, 0.15)
                 Tab._selPage = self
@@ -499,53 +545,31 @@ function PrimordialUI:CreateWindow(config)
                 stUnderline.Name = "Underline"
                 stUnderline.Visible = false
 
-                -- SubTab gets its OWN colHolder inside the shared colScroll
-                local stColHolder = Instance.new("Frame")
-                stColHolder.Size = UDim2.new(1, -16, 0, 0)
-                stColHolder.Position = UDim2.new(0, 8, 0, 8)
-                stColHolder.AnchorPoint = Vector2.new(0, 0)
-                stColHolder.BackgroundTransparency = 1
-                stColHolder.BorderSizePixel = 0
-                stColHolder.AutomaticSize = Enum.AutomaticSize.Y
-                stColHolder.Visible = false
-                stColHolder.Parent = Page._colScroll
-
-                -- Use UIListLayout so columns flow left to right
-                local stColList = Instance.new("UIListLayout")
-                stColList.FillDirection = Enum.FillDirection.Horizontal
-                stColList.Padding = UDim.new(0, 8)
-                stColList.HorizontalAlignment = Enum.HorizontalAlignment.Left
-                stColList.VerticalAlignment = Enum.VerticalAlignment.Top
-                stColList.SortOrder = Enum.SortOrder.LayoutOrder
-                stColList.Parent = stColHolder
-
-                -- Left column: always 50% so right column can sit beside it
-                local stLeftHolder = MakeFrame(stColHolder,
-                    UDim2.new(0.5, -4, 0, 0), UDim2.new(0,0,0,0), Theme.BG)
-                stLeftHolder.LayoutOrder = 1
+                -- SubTab frames (left and right column content)
+                local stLeftHolder = MakeFrame(Page._leftCol,
+                    UDim2.new(1,0,0,0), UDim2.new(0,0,0,0), Theme.BG)
                 stLeftHolder.AutomaticSize = Enum.AutomaticSize.Y
+                stLeftHolder.Visible = false
                 MakeListLayout(stLeftHolder, Enum.FillDirection.Vertical, 8)
                 SubTab._leftHolder = stLeftHolder
 
-                -- Right column: same size, hidden until used
-                local stRightHolder = MakeFrame(stColHolder,
-                    UDim2.new(0.5, -4, 0, 0), UDim2.new(0,0,0,0), Theme.BG)
-                stRightHolder.LayoutOrder = 2
+                local stRightHolder = MakeFrame(Page._rightCol,
+                    UDim2.new(1,0,0,0), UDim2.new(0,0,0,0), Theme.BG)
                 stRightHolder.AutomaticSize = Enum.AutomaticSize.Y
                 stRightHolder.Visible = false
                 MakeListLayout(stRightHolder, Enum.FillDirection.Vertical, 8)
                 SubTab._rightHolder = stRightHolder
-                SubTab._colHolder = stColHolder
-                SubTab._hasTwoCols = false
 
                 function SubTab:_activate()
                     for _, st in ipairs(Page._subTabs) do
-                        if st._colHolder then st._colHolder.Visible = false end
-                        st._underline.Visible = false
+                        st._leftHolder.Visible  = false
+                        st._rightHolder.Visible = false
+                        st._underline.Visible   = false
                         Tween(st._label, {TextColor3 = Theme.TextDim}, 0.12)
                     end
-                    if self._colHolder then self._colHolder.Visible = true end
-                    self._underline.Visible = true
+                    self._leftHolder.Visible  = true
+                    self._rightHolder.Visible = true
+                    self._underline.Visible   = true
                     Tween(self._label, {TextColor3 = Theme.TextPrimary}, 0.12)
                     Page._selSubTab = self
                 end
@@ -579,26 +603,15 @@ function PrimordialUI:CreateWindow(config)
                     config = config or {}
                     local sTitle = config.Title or "Section"
                     local side   = config.Side  or "Left"
-
-                    -- First right section: show the right column
-                    if side == "Right" and not SubTab._hasTwoCols then
-                        SubTab._hasTwoCols = true
-                        SubTab._rightHolder.Visible = true
-                    end
-
                     local holder = side == "Right" and SubTab._rightHolder or SubTab._leftHolder
 
                     local Section = {}
 
-                    local box = Instance.new("Frame")
-                    box.AutomaticSize = Enum.AutomaticSize.XY
-                    box.BackgroundColor3 = Theme.BGTertiary
-                    box.BorderSizePixel = 0
-                    box.Size = UDim2.fromOffset(0,0)
-                    box.Parent = holder
+                    local box = MakeFrame(holder, UDim2.new(1,0,0,0), nil, Theme.BGTertiary)
+                    box.AutomaticSize = Enum.AutomaticSize.Y
                     MakeCorner(box, 6)
                     MakePadding(box, 10, 10, 10, 10)
-                    MakeListLayout(box, Enum.FillDirection.Vertical, 8)
+                    local boxList = MakeListLayout(box, Enum.FillDirection.Vertical, 8)
 
                     -- Section title
                     local titleRow = MakeFrame(box, UDim2.new(1,0,0,16), nil, Theme.BGTertiary)
@@ -606,8 +619,7 @@ function PrimordialUI:CreateWindow(config)
                         UDim2.new(1,0,1,0), nil,
                         Theme.TextSecond, Enum.Font.GothamBold, 12)
                     -- Divider line after title
-                    local div = MakeFrame(box, UDim2.new(1,0,0,1), nil, Theme.Accent)
-                    div.Name = "AccentLine"
+                    local div = MakeFrame(box, UDim2.new(1,0,0,1), nil, Theme.Border)
 
                     Section._box = box
 
@@ -1231,6 +1243,9 @@ function PrimordialUI:CreateWindow(config)
                         return CP
                     end
 
+                    return Section
+                end -- AddSection
+
                 return SubTab
             end -- AddSubTab
 
@@ -1319,40 +1334,37 @@ function PrimordialUI:CreateWindow(config)
     function Window:SetAccent(color)
         Theme.Accent = color
         Theme.SliderFill = color
-        -- Update title color
-        if titleLabel then titleLabel.TextColor3 = color end        -- Recursively update all accent-colored elements
+        -- Recursively update all descendants with accent color
         local function updateDescendants(parent)
             for _, obj in ipairs(parent:GetDescendants()) do
+                -- Update slider fills
                 if obj.Name == "Fill" and obj:IsA("Frame") then
                     obj.BackgroundColor3 = color
                 end
+                -- Update tab indicators
                 if obj.Name == "Indicator" and obj:IsA("Frame") then
                     obj.BackgroundColor3 = color
                 end
+                -- Update sub-tab underlines
                 if obj.Name == "Underline" and obj:IsA("Frame") then
                     obj.BackgroundColor3 = color
                 end
+                -- Update scrollbar
                 if obj:IsA("ScrollingFrame") then
                     obj.ScrollBarImageColor3 = color
                 end
+                -- Update sidebar accent bars
                 if obj.Name == "SideAccent" and obj:IsA("Frame") then
-                    obj.BackgroundColor3 = color
-                end
-                -- Separator lines (header sep, tab bar sep, section divs)
-                if obj.Name == "AccentLine" and obj:IsA("Frame") then
                     obj.BackgroundColor3 = color
                 end
             end
         end
         pcall(function() updateDescendants(Window._main) end)
-        -- Update separator lines on main
-        for _, obj in ipairs(main:GetChildren()) do
-            if obj:IsA("Frame") and obj.Size.Y.Offset == 1 then
-                obj.BackgroundColor3 = color
-            end
-        end
+        -- Update tab indicators explicitly
         for _, t in ipairs(Window._tabs) do
-            if t._indicator then t._indicator.BackgroundColor3 = color end
+            if t._indicator then
+                t._indicator.BackgroundColor3 = color
+            end
         end
     end
 
