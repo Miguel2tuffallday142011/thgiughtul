@@ -708,9 +708,9 @@ function PrimordialUI:CreateWindow(config)
                         fill.Name = "Fill"
                         MakeCorner(fill, 4)
 
-                        local knob = MakeFrame(track, UDim2.fromOffset(8,8), UDim2.new(0,0,0.5,-4), Theme.TextPrimary) -- Knob
+                        local knob = MakeFrame(track, UDim2.fromOffset(6,10), UDim2.new(0,0,0.5,-5), Theme.TextPrimary) -- Knob
                         knob.Name = "Knob"
-                        MakeCorner(knob, 4)
+                        MakeCorner(knob, 3)
 
                         local value = default
                         local function pct() return (value - min) / (max - min) end
@@ -1134,11 +1134,11 @@ function PrimordialUI:CreateWindow(config)
                             Theme.TextSecond, Enum.Font.Gotham, compact and 11 or 12)
 
                         local swatchBtn = Instance.new("TextButton")
-                        swatchBtn.Size = UDim2.fromOffset(30, 16) -- Adjusted size for wider swatch
+                        swatchBtn.Size = UDim2.fromOffset(16, 10) -- Adjusted size for very small swatch
                         if compact then
                             swatchBtn.Position = UDim2.fromOffset(0, 16)
                         else
-                            swatchBtn.Position = UDim2.new(1,-32,0.5,-8) -- Adjusted position
+                            swatchBtn.Position = UDim2.new(1,-20,0.5,-5) -- Adjusted position
                         end
                         swatchBtn.BackgroundColor3 = default
                         swatchBtn.Text = ""
