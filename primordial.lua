@@ -684,8 +684,6 @@ function PrimordialUI:CreateWindow(config)
                         table.insert(Window._registeredToggles, Toggle)
                         return Toggle
                     end
-                        return Toggle
-                    end
 
                     -- ── Slider ───────────────────────────────────────────────
                     function Section:AddSlider(config)
