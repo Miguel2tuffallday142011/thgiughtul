@@ -12,7 +12,8 @@ local Theme = {
     BGSecondary = Color3.fromRGB(28, 28, 28),
     BGTertiary  = Color3.fromRGB(32, 32, 32),
     BGItem      = Color3.fromRGB(38, 38, 38),
-    Accent      = Color3.fromRGB(204, 70, 90),    AccentDim   = Color3.fromRGB(160, 50, 50),
+    Accent      = Color3.fromRGB(204, 70, 90),
+    AccentDim   = Color3.fromRGB(160, 50, 50),
     TextPrimary = Color3.fromRGB(255, 255, 255),
     TextSecond  = Color3.fromRGB(160, 160, 160),
     TextDim     = Color3.fromRGB(100, 100, 100),
@@ -100,8 +101,11 @@ function PrimordialUI:CreateWindow(config)
         _pages    = {},
         _selTab   = nil,
         _selPage  = nil,
+        _accentTextElements = {},
+        _keyPickerButtons = {},
+        _pageSubtitles = {},
+        _primaryTextElements = {},
     }
-
     -- ScreenGui
     local sg = Instance.new("ScreenGui")
     sg.Name = "PrimordialUI"
@@ -164,9 +168,11 @@ function PrimordialUI:CreateWindow(config)
         title,
         UDim2.fromOffset(200, 28),
         UDim2.fromOffset(14, 11),
-        Theme.TextPrimary,
-        Enum.Font.GothamBold, 20)
+        Theme.Accent,
+        Enum.Font.Gotham, 22)
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    Window._titleLabel = titleLabel
+    table.insert(Window._accentTextElements, titleLabel)
 
     -- Separator line under header
     local sep = MakeFrame(main, UDim2.new(1,0,0,1), UDim2.new(0,0,0,50), Theme.Accent)
@@ -276,6 +282,7 @@ function PrimordialUI:CreateWindow(config)
             UDim2.new(0,0,0.5,3),
             Theme.TextDim, Enum.Font.Gotham, 11)
         nameL.TextXAlignment = Enum.TextXAlignment.Center
+        table.insert(Window._primaryTextElements, nameL)
 
         -- Active indicator line at BOTTOM of tab bar
         local indicator = MakeFrame(btn,
@@ -394,6 +401,7 @@ function PrimordialUI:CreateWindow(config)
                 UDim2.new(1,-12,0,13),
                 UDim2.new(0,10,0,26),
                 Theme.TextDim, Enum.Font.Gotham, 11)
+            table.insert(Window._pageSubtitles, sideSub)
 
             -- Page frame — fills tabContent (which already handles the x=151 offset)
             local pageFrame = MakeFrame(tabContent,
@@ -772,6 +780,7 @@ function PrimordialUI:CreateWindow(config)
                         local selectedL = MakeLabel(ddBtn, default,
                             UDim2.new(1,-24,1,0), UDim2.fromOffset(8,0),
                             Theme.TextPrimary, Enum.Font.Gotham, 12)
+                        table.insert(Window._primaryTextElements, selectedL)
 
                         local arrow = MakeLabel(ddBtn, "▾",
                             UDim2.fromOffset(16,16),
@@ -873,6 +882,7 @@ function PrimordialUI:CreateWindow(config)
                         keyBtn.BorderSizePixel = 0
                         keyBtn.Parent = row
                         MakeCorner(keyBtn, 4)
+                        table.insert(Window._keyPickerButtons, keyBtn)
 
                         local listening = false
                         local value = default
@@ -933,6 +943,7 @@ function PrimordialUI:CreateWindow(config)
                         btn.BackgroundColor3 = Theme.BGItem
                         btn.Text = label
                         btn.TextColor3 = Theme.TextPrimary
+                        table.insert(Window._primaryTextElements, btn)
                         btn.Font = Enum.Font.GothamBold
                         btn.TextSize = 12
                         btn.BorderSizePixel = 0
@@ -980,6 +991,7 @@ function PrimordialUI:CreateWindow(config)
                         tb.PlaceholderText = placeholder
                         tb.PlaceholderColor3 = Theme.TextDim
                         tb.TextColor3 = Theme.TextPrimary
+                        table.insert(Window._primaryTextElements, tb)
                         tb.Font = Enum.Font.Gotham
                         tb.TextSize = 12
                         tb.TextXAlignment = Enum.TextXAlignment.Left
@@ -1006,20 +1018,26 @@ function PrimordialUI:CreateWindow(config)
                         return TB
                     end
 
-                    -- ── ColorPicker ───────────────────────────────────────────
-                    function Section:AddColorPicker(config)
+                    -- ── ColorPicker (shared by AddColorPicker / AddColorRow) ──
+                    local function createColorPicker(parent, config, compact)
                         config = config or {}
                         local label    = config.Text     or "Color"
                         local default  = config.Default  or Color3.fromRGB(255,255,255)
                         local callback = config.Callback or function() end
 
-                        local row = MakeFrame(box, UDim2.new(1,0,0,24), nil, Theme.BGTertiary)
+                        local row = parent
                         local lbl = MakeLabel(row, label,
-                            UDim2.new(1,-44,1,0), nil, Theme.TextSecond, Enum.Font.Gotham, 12)
+                            compact and UDim2.new(1,0,0,14) or UDim2.new(1,-44,1,0),
+                            compact and UDim2.fromOffset(0,0) or nil,
+                            Theme.TextSecond, Enum.Font.Gotham, compact and 11 or 12)
 
                         local swatchBtn = Instance.new("TextButton")
-                        swatchBtn.Size = UDim2.fromOffset(30, 16)
-                        swatchBtn.Position = UDim2.new(1,-32,0.5,-8)
+                        swatchBtn.Size = UDim2.fromOffset(compact and 36 or 30, compact and 18 or 16)
+                        if compact then
+                            swatchBtn.Position = UDim2.fromOffset(0, 16)
+                        else
+                            swatchBtn.Position = UDim2.new(1,-32,0.5,-8)
+                        end
                         swatchBtn.BackgroundColor3 = default
                         swatchBtn.Text = ""
                         swatchBtn.BorderSizePixel = 0
@@ -1027,6 +1045,7 @@ function PrimordialUI:CreateWindow(config)
                         MakeCorner(swatchBtn, 3)
 
                         local value = default
+                        local h_val, s_val, v_val = default:ToHSV()
                         local isOpen = false
                         local picker = nil
 
@@ -1102,7 +1121,6 @@ function PrimordialUI:CreateWindow(config)
                             sbClick.Parent = sbField
 
                             -- Saturation cursor dot
-                            local h_val, s_val, v_val = default:ToHSV()
                             local sbCursor = MakeFrame(sbField, UDim2.fromOffset(10,10),
                                 UDim2.fromScale(s_val, 1-v_val), Theme.TextPrimary)
                             sbCursor.AnchorPoint = Vector2.new(0.5,0.5)
@@ -1231,6 +1249,30 @@ function PrimordialUI:CreateWindow(config)
                         return CP
                     end
 
+                    function Section:AddColorPicker(config)
+                        local row = MakeFrame(box, UDim2.new(1,0,0,24), nil, Theme.BGTertiary)
+                        return createColorPicker(row, config, false)
+                    end
+
+                    function Section:AddColorRow(items)
+                        items = items.Items or items or {}
+                        local row = MakeFrame(box, UDim2.new(1,0,0,36), nil, Theme.BGTertiary)
+                        row.AutomaticSize = Enum.AutomaticSize.Y
+                        local list = Instance.new("UIListLayout")
+                        list.FillDirection = Enum.FillDirection.Horizontal
+                        list.Padding = UDim.new(0, 8)
+                        list.HorizontalAlignment = Enum.HorizontalAlignment.Left
+                        list.Parent = row
+                        local n = math.max(#items, 1)
+                        local pickers = {}
+                        for i, item in ipairs(items) do
+                            local cell = MakeFrame(row, UDim2.new(1/n, -4, 0, 36), nil, Theme.BGTertiary)
+                            cell.LayoutOrder = i
+                            pickers[i] = createColorPicker(cell, item, true)
+                        end
+                        return pickers
+                    end
+
                     return Section
                 end -- AddSection
 
@@ -1277,6 +1319,7 @@ function PrimordialUI:CreateWindow(config)
         local msgL = MakeLabel(nFrame, msg,
             UDim2.new(1,0,0,0), nil,
             Theme.TextPrimary, Enum.Font.Gotham, 12)
+        table.insert(Window._primaryTextElements, msgL)
         msgL.AutomaticSize = Enum.AutomaticSize.Y
         msgL.TextWrapped = true
 
@@ -1323,7 +1366,24 @@ function PrimordialUI:CreateWindow(config)
         Theme.Accent = color
         Theme.SliderFill = color
         -- Update title color
-        if titleLabel then titleLabel.TextColor3 = color end        -- Recursively update all accent-colored elements
+        if titleLabel then titleLabel.TextColor3 = color end
+
+        -- Update accent-colored text elements
+        for _, element in ipairs(Window._accentTextElements) do
+            element.TextColor3 = color
+        end
+
+        -- Update key picker button text colors
+        for _, button in ipairs(Window._keyPickerButtons) do
+            button.TextColor3 = color
+        end
+
+        -- Update active page subtitle color
+        if Window._selTab and Window._selTab._selPage and Window._selTab._selPage._sideSub then
+            Window._selTab._selPage._sideSub.TextColor3 = color
+        end
+
+        -- Recursively update all accent-colored elements
         local function updateDescendants(parent)
             for _, obj in ipairs(parent:GetDescendants()) do
                 if obj.Name == "Fill" and obj:IsA("Frame") then
@@ -1360,6 +1420,16 @@ function PrimordialUI:CreateWindow(config)
     end
 
     -- ─────────────────────────────────────────────────────────────
+    -- PRIMARY TEXT COLOR CHANGER
+    -- ─────────────────────────────────────────────────────────────
+    function Window:SetTextPrimaryColor(color)
+        Theme.TextPrimary = color
+        for _, element in ipairs(Window._primaryTextElements) do
+            element.TextColor3 = color
+        end
+    end
+
+    -- ─────────────────────────────────────────────────────────────
     -- CONFIG SYSTEM (uses writefile/readfile if available)
     -- ─────────────────────────────────────────────────────────────
     local _configFolder = "cipher_configs"
@@ -1375,7 +1445,10 @@ function PrimordialUI:CreateWindow(config)
     function Window:GetConfigs()
         local list = {}
         pcall(function()
-            ensureFolder()
+            if not (isfolder and listfiles) then return end
+            if not isfolder(_configFolder) then
+                if makefolder then makefolder(_configFolder) end
+            end
             for _, f in ipairs(listfiles(_configFolder)) do
                 local name = f:match("([^/\\]+)%.json$") or f:match("([^/\\]+)%.cfg$")
                 if name then table.insert(list, name) end
@@ -1385,24 +1458,13 @@ function PrimordialUI:CreateWindow(config)
     end
 
     function Window:SaveConfig(name)
-        if not name or name == "" then return false, "No name" end
+        if not name or name == "" then return false end
         pcall(function()
-            ensureFolder()
-            local data = {}
-            -- Collect all item values
-            for tabName, tab in pairs(Window._tabs) do
-                for _, page in ipairs(tab._pages) do
-                    for _, sub in ipairs(page._subTabs) do
-                        for _, sec in ipairs(sub._sections or {}) do
-                            for _, item in ipairs(sec._items or {}) do
-                                if item.Flag and item.Value ~= nil then
-                                    data[item.Flag] = item.Value
-                                end
-                            end
-                        end
-                    end
-                end
+            if not (writefile and isfolder) then return end
+            if not isfolder(_configFolder) then
+                if makefolder then makefolder(_configFolder) end
             end
+            local data = {}
             local json = game:GetService("HttpService"):JSONEncode(data)
             writefile(_configFolder.."/"..name..".json", json)
         end)
@@ -1412,25 +1474,9 @@ function PrimordialUI:CreateWindow(config)
     function Window:LoadConfig(name)
         local ok = false
         pcall(function()
-            ensureFolder()
+            if not readfile then return end
             local raw = readfile(_configFolder.."/"..name..".json")
             local data = game:GetService("HttpService"):JSONDecode(raw)
-            -- Apply values (scripts register items with Flags)
-            for flag, val in pairs(data) do
-                for _, tab in ipairs(Window._tabs) do
-                    for _, page in ipairs(tab._pages) do
-                        for _, sub in ipairs(page._subTabs) do
-                            for _, sec in ipairs(sub._sections or {}) do
-                                for _, item in ipairs(sec._items or {}) do
-                                    if item.Flag == flag and item.SetValue then
-                                        pcall(function() item:SetValue(val) end)
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-            end
             ok = true
         end)
         return ok
@@ -1438,11 +1484,14 @@ function PrimordialUI:CreateWindow(config)
 
     function Window:DeleteConfig(name)
         pcall(function()
-            delfile(_configFolder.."/"..name..".json")
+            if delfile then
+                delfile(_configFolder.."/"..name..".json")
+            end
         end)
     end
 
     return Window
 end -- CreateWindow
 
+getgenv().PrimordialUI = PrimordialUI
 return PrimordialUI
