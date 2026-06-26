@@ -869,6 +869,8 @@ function PrimordialUI:CreateWindow(config)
                             isOpen = true
                             arrow.Text = "▴"
 
+                            local listH = #options * 24 + 4 -- Moved this line here
+
                             -- Open below the button
                             dropList = MakeFrame(Window._sg, -- Parent to ScreenGui for absolute positioning
                                 UDim2.new(1,0,0, listH),
@@ -1667,5 +1669,4 @@ function PrimordialUI:CreateWindow(config)
     return Window
 end -- CreateWindow
 
-getgenv().PrimordialUI = PrimordialUI
 return PrimordialUI
