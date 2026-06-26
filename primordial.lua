@@ -434,6 +434,7 @@ function PrimordialUI:CreateWindow(config)
             colScroll.BackgroundTransparency = 1
             colScroll.BorderSizePixel = 0
             colScroll.ScrollBarThickness = 0 -- Hidden scrollbar
+            colScroll.ScrollBarImageTransparency = 1 -- Fully hide scrollbar image
             colScroll.ScrollBarImageColor3 = Theme.Accent
             colScroll.CanvasSize = UDim2.new(0,0,0,0)
             colScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -649,7 +650,6 @@ function PrimordialUI:CreateWindow(config)
                         if default then
                             table.insert(Window._toggleSwitches, trackBtn)
                         end
-
                         local knob = MakeFrame(trackBtn,
                             UDim2.fromOffset(12,12),
                             UDim2.fromOffset(default and 20 or 3, 3),
@@ -661,6 +661,16 @@ function PrimordialUI:CreateWindow(config)
                             Tween(trackBtn, {BackgroundColor3 = value and Theme.Accent or Theme.SliderBG}, 0.15)
                             Tween(knob, {Position = UDim2.fromOffset(value and 20 or 3, 3)}, 0.15)
                             Tween(lbl, {TextColor3 = value and Theme.TextPrimary or Theme.TextDim}, 0.15)
+                            if value then
+                                if not table.find(Window._toggleSwitches, trackBtn) then
+                                    table.insert(Window._toggleSwitches, trackBtn)
+                                end
+                            else
+                                local index = table.find(Window._toggleSwitches, trackBtn)
+                                if index then
+                                    table.remove(Window._toggleSwitches, index)
+                                end
+                            end
                         end
 
                         trackBtn.MouseButton1Click:Connect(function()
@@ -1376,7 +1386,7 @@ function PrimordialUI:CreateWindow(config)
         msgL.TextWrapped = true
 
         -- Bottom progress bar
-        local bar = MakeFrame(nFrame, UDim2.new(1,0,0,2), UDim2.new(0,0,1,-2), Theme.Accent) -- Moved up by 2 pixels
+        local bar = MakeFrame(nFrame, UDim2.new(1,0,0,2), UDim2.new(0,0,1,-4), Theme.Accent) -- Moved up by 4 pixels
         bar.AnchorPoint = Vector2.new(0,0)
         Tween(bar, {Size = UDim2.new(0,0,0,2)}, lifetime, Enum.EasingStyle.Linear)
 
@@ -1437,6 +1447,11 @@ function PrimordialUI:CreateWindow(config)
         -- Update active page subtitle color
         if Window._selTab and Window._selTab._selPage and Window._selTab._selPage._sideSub then
             Window._selTab._selPage._sideSub.TextColor3 = color
+        end
+
+        -- Update toggle switches background colors
+        for _, toggleBtn in ipairs(Window._toggleSwitches) do
+            toggleBtn.BackgroundColor3 = color
         end
 
         -- Recursively update all accent-colored elements
@@ -1551,3 +1566,4 @@ end -- CreateWindow
 
 getgenv().PrimordialUI = PrimordialUI
 return PrimordialUI
+
