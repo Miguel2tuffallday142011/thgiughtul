@@ -526,7 +526,7 @@ function PrimordialUI:CreateWindow(config)
                 -- Use UIListLayout so columns flow left to right
                 local stColList = Instance.new("UIListLayout")
                 stColList.FillDirection = Enum.FillDirection.Horizontal
-                stColList.Padding = UDim.new(0, 8)
+                stColList.Padding = UDim.new(0, 8) -- Added horizontal padding between columns
                 stColList.HorizontalAlignment = Enum.HorizontalAlignment.Left
                 stColList.VerticalAlignment = Enum.VerticalAlignment.Top
                 stColList.SortOrder = Enum.SortOrder.LayoutOrder
