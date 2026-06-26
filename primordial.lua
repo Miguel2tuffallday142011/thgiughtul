@@ -865,7 +865,7 @@ function PrimordialUI:CreateWindow(config)
                                 UDim2.new(1,0,0, listH),
                                 UDim2.new(0,0,0, -(listH + 2)),
                                 Theme.BGItem)
-                            dropList.ZIndex = 10
+                            dropList.ZIndex = 999 -- Increased ZIndex to ensure it appears on top
                             MakeCorner(dropList, 4)
                             MakePadding(dropList, 2,2,2,2)
                             MakeListLayout(dropList, Enum.FillDirection.Vertical, 0)
