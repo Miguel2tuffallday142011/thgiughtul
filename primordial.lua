@@ -708,16 +708,16 @@ function PrimordialUI:CreateWindow(config)
                         fill.Name = "Fill"
                         MakeCorner(fill, 4)
 
-                        local knob = MakeFrame(track, UDim2.fromOffset(6,10), UDim2.new(0,0,0.5,-5), Theme.TextPrimary) -- Knob
+                        local knob = MakeFrame(track, UDim2.fromOffset(10,10), UDim2.new(0,0,0.5,-5), Theme.TextPrimary) -- Knob
                         knob.Name = "Knob"
-                        MakeCorner(knob, 3)
+                        MakeCorner(knob, 5)
 
                         local value = default
                         local function pct() return (value - min) / (max - min) end
                         local function updateUI()
                             local fillSizeX = pct()
                             Tween(fill, {Size = UDim2.new(fillSizeX,0,1,0)}, 0.05)
-                            Tween(knob, {Position = UDim2.new(fillSizeX, -4, 0.5, -4)}, 0.05) -- Move knob with fill
+                            Tween(knob, {Position = UDim2.new(fillSizeX, -5, 0.5, -5)}, 0.05) -- Move knob with fill
                             local fmt = decimals > 0 and string.format("%."..decimals.."f", value) or tostring(math.floor(value))
                             valLbl.Text = fmt .. suffix
                         end
@@ -1134,11 +1134,11 @@ function PrimordialUI:CreateWindow(config)
                             Theme.TextSecond, Enum.Font.Gotham, compact and 11 or 12)
 
                         local swatchBtn = Instance.new("TextButton")
-                        swatchBtn.Size = UDim2.fromOffset(16, 10) -- Adjusted size for very small swatch
+                        swatchBtn.Size = UDim2.fromOffset(24, 12) -- Adjusted size for very small swatch
                         if compact then
                             swatchBtn.Position = UDim2.fromOffset(0, 16)
                         else
-                            swatchBtn.Position = UDim2.new(1,-20,0.5,-5) -- Adjusted position
+                            swatchBtn.Position = UDim2.new(1,-28,0.5,-6) -- Adjusted position
                         end
                         swatchBtn.BackgroundColor3 = default
                         swatchBtn.Text = ""
