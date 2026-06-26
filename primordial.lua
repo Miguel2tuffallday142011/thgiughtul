@@ -165,10 +165,9 @@ function PrimordialUI:CreateWindow(config)
         title,
         UDim2.fromOffset(200, 28),
         UDim2.fromOffset(14, 11),
-        Theme.Accent,
-        Enum.Font.Gotham, 22)
+        Theme.TextPrimary,
+        Enum.Font.GothamBold, 20)
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    Window._titleLabel = titleLabel
 
     -- Separator line under header
     local sep = MakeFrame(main, UDim2.new(1,0,0,1), UDim2.new(0,0,0,50), Theme.Accent)
@@ -1008,26 +1007,20 @@ function PrimordialUI:CreateWindow(config)
                         return TB
                     end
 
-                    -- ── ColorPicker (shared by AddColorPicker / AddColorRow) ──
-                    local function createColorPicker(parent, config, compact)
+                    -- ── ColorPicker ───────────────────────────────────────────
+                    function Section:AddColorPicker(config)
                         config = config or {}
                         local label    = config.Text     or "Color"
                         local default  = config.Default  or Color3.fromRGB(255,255,255)
                         local callback = config.Callback or function() end
 
-                        local row = parent
+                        local row = MakeFrame(box, UDim2.new(1,0,0,24), nil, Theme.BGTertiary)
                         local lbl = MakeLabel(row, label,
-                            compact and UDim2.new(1,0,0,14) or UDim2.new(1,-44,1,0),
-                            compact and UDim2.fromOffset(0,0) or nil,
-                            Theme.TextSecond, Enum.Font.Gotham, compact and 11 or 12)
+                            UDim2.new(1,-44,1,0), nil, Theme.TextSecond, Enum.Font.Gotham, 12)
 
                         local swatchBtn = Instance.new("TextButton")
-                        swatchBtn.Size = UDim2.fromOffset(compact and 36 or 30, compact and 18 or 16)
-                        if compact then
-                            swatchBtn.Position = UDim2.fromOffset(0, 16)
-                        else
-                            swatchBtn.Position = UDim2.new(1,-32,0.5,-8)
-                        end
+                        swatchBtn.Size = UDim2.fromOffset(30, 16)
+                        swatchBtn.Position = UDim2.new(1,-32,0.5,-8)
                         swatchBtn.BackgroundColor3 = default
                         swatchBtn.Text = ""
                         swatchBtn.BorderSizePixel = 0
@@ -1035,7 +1028,6 @@ function PrimordialUI:CreateWindow(config)
                         MakeCorner(swatchBtn, 3)
 
                         local value = default
-                        local h_val, s_val, v_val = default:ToHSV()
                         local isOpen = false
                         local picker = nil
 
@@ -1111,6 +1103,7 @@ function PrimordialUI:CreateWindow(config)
                             sbClick.Parent = sbField
 
                             -- Saturation cursor dot
+                            local h_val, s_val, v_val = default:ToHSV()
                             local sbCursor = MakeFrame(sbField, UDim2.fromOffset(10,10),
                                 UDim2.fromScale(s_val, 1-v_val), Theme.TextPrimary)
                             sbCursor.AnchorPoint = Vector2.new(0.5,0.5)
@@ -1238,33 +1231,6 @@ function PrimordialUI:CreateWindow(config)
                         end
                         return CP
                     end
-
-                    function Section:AddColorPicker(config)
-                        local row = MakeFrame(box, UDim2.new(1,0,0,24), nil, Theme.BGTertiary)
-                        return createColorPicker(row, config, false)
-                    end
-
-                    function Section:AddColorRow(items)
-                        items = items.Items or items or {}
-                        local row = MakeFrame(box, UDim2.new(1,0,0,36), nil, Theme.BGTertiary)
-                        row.AutomaticSize = Enum.AutomaticSize.Y
-                        local list = Instance.new("UIListLayout")
-                        list.FillDirection = Enum.FillDirection.Horizontal
-                        list.Padding = UDim.new(0, 8)
-                        list.HorizontalAlignment = Enum.HorizontalAlignment.Left
-                        list.Parent = row
-                        local n = math.max(#items, 1)
-                        local pickers = {}
-                        for i, item in ipairs(items) do
-                            local cell = MakeFrame(row, UDim2.new(1/n, -4, 0, 36), nil, Theme.BGTertiary)
-                            cell.LayoutOrder = i
-                            pickers[i] = createColorPicker(cell, item, true)
-                        end
-                        return pickers
-                    end
-
-                    return Section
-                end -- AddSection
 
                 return SubTab
             end -- AddSubTab
@@ -1455,5 +1421,4 @@ function PrimordialUI:CreateWindow(config)
     return Window
 end -- CreateWindow
 
-getgenv().PrimordialUI = PrimordialUI
 return PrimordialUI
