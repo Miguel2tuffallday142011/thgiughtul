@@ -1667,4 +1667,5 @@ function PrimordialUI:CreateWindow(config)
     return Window
 end -- CreateWindow
 
+getgenv().PrimordialUI = PrimordialUI
 return PrimordialUI
