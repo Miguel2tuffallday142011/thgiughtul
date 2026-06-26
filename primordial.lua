@@ -534,7 +534,7 @@ function PrimordialUI:CreateWindow(config)
 
                 -- Left column: always 50% so right column can sit beside it
                 local stLeftHolder = MakeFrame(stColHolder,
-                    UDim2.new(0.5, -4, 0, 0), UDim2.new(0,0,0,0), Theme.BG)
+                    UDim2.new(0.5, -16, 0, 0), UDim2.new(0,0,0,0), Theme.BG)
                 stLeftHolder.LayoutOrder = 1
                 stLeftHolder.AutomaticSize = Enum.AutomaticSize.Y
                 MakeListLayout(stLeftHolder, Enum.FillDirection.Vertical, 8)
@@ -542,7 +542,7 @@ function PrimordialUI:CreateWindow(config)
 
                 -- Right column: same size, hidden until used
                 local stRightHolder = MakeFrame(stColHolder,
-                    UDim2.new(0.5, -4, 0, 0), UDim2.new(0,0,0,0), Theme.BG)
+                    UDim2.new(0.5, -16, 0, 0), UDim2.new(0,0,0,0), Theme.BG)
                 stRightHolder.LayoutOrder = 2
                 stRightHolder.AutomaticSize = Enum.AutomaticSize.Y
                 stRightHolder.Visible = false
