@@ -204,7 +204,7 @@ function PrimordialUI:CreateWindow(config)
     local sideBar = MakeFrame(content,
         UDim2.new(0,1,1,0),
         UDim2.new(0,150,0,0),
-        Theme.Sidebar) -- Changed color to Theme.Sidebar
+        Theme.Border)
 
     -- Right pane (sub-tabs + columns)
     local rightPane = MakeFrame(content,
@@ -619,7 +619,7 @@ function PrimordialUI:CreateWindow(config)
                         UDim2.new(1,0,1,0), nil,
                         Theme.TextSecond, Enum.Font.GothamBold, 12)
                     -- Divider line after title
-                    local div = MakeFrame(box, UDim2.new(1,20,0,1), UDim2.new(0,-10,0,0), Theme.Accent)
+                    local div = MakeFrame(box, UDim2.new(1,0,0,1), nil, Theme.Accent)
                     div.Name = "AccentLine"
 
                     Section._box = box
