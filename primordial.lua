@@ -692,7 +692,7 @@ function PrimordialUI:CreateWindow(config)
                         local callback = config.Callback or function() end
                         local decimals = config.Decimals or 0
 
-                        local row = MakeFrame(box, UDim2.new(1,0,0,36), nil, Theme.BGTertiary)
+                        local row = MakeFrame(box, UDim2.new(1,0,0,28), nil, Theme.BGTertiary)
 
                         local topRow = MakeFrame(row, UDim2.new(1,0,0,16), nil, Theme.BGTertiary)
                         local lbl = MakeLabel(topRow, label, UDim2.new(1,-60,1,0), nil,
@@ -702,16 +702,22 @@ function PrimordialUI:CreateWindow(config)
                             Theme.TextDim, Enum.Font.GothamBold, 12)
                         valLbl.TextXAlignment = Enum.TextXAlignment.Right
 
-                        local track = MakeFrame(row, UDim2.new(1,0,0,4), UDim2.new(0,0,0,24), Theme.SliderBG)
-                        MakeCorner(track, 2)
+                        local track = MakeFrame(row, UDim2.new(1,0,0,8), UDim2.new(0,0,0,18), Theme.SliderBG)
+                        MakeCorner(track, 4)
                         local fill = MakeFrame(track, UDim2.new(0,0,1,0), nil, Theme.SliderFill)
                         fill.Name = "Fill"
-                        MakeCorner(fill, 2)
+                        MakeCorner(fill, 4)
+
+                        local knob = MakeFrame(track, UDim2.fromOffset(8,8), UDim2.new(0,0,0.5,-4), Theme.TextPrimary) -- Knob
+                        knob.Name = "Knob"
+                        MakeCorner(knob, 4)
 
                         local value = default
                         local function pct() return (value - min) / (max - min) end
                         local function updateUI()
-                            Tween(fill, {Size = UDim2.new(pct(),0,1,0)}, 0.05)
+                            local fillSizeX = pct()
+                            Tween(fill, {Size = UDim2.new(fillSizeX,0,1,0)}, 0.05)
+                            Tween(knob, {Position = UDim2.new(fillSizeX, -4, 0.5, -4)}, 0.05) -- Move knob with fill
                             local fmt = decimals > 0 and string.format("%."..decimals.."f", value) or tostring(math.floor(value))
                             valLbl.Text = fmt .. suffix
                         end
@@ -1128,11 +1134,11 @@ function PrimordialUI:CreateWindow(config)
                             Theme.TextSecond, Enum.Font.Gotham, compact and 11 or 12)
 
                         local swatchBtn = Instance.new("TextButton")
-                        swatchBtn.Size = UDim2.fromOffset(compact and 36 or 30, compact and 18 or 16)
+                        swatchBtn.Size = UDim2.fromOffset(30, 16) -- Adjusted size for wider swatch
                         if compact then
                             swatchBtn.Position = UDim2.fromOffset(0, 16)
                         else
-                            swatchBtn.Position = UDim2.new(1,-32,0.5,-8)
+                            swatchBtn.Position = UDim2.new(1,-32,0.5,-8) -- Adjusted position
                         end
                         swatchBtn.BackgroundColor3 = default
                         swatchBtn.Text = ""
