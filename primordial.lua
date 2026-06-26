@@ -779,7 +779,8 @@ function PrimordialUI:CreateWindow(config)
                             UDim2.new(1,0,0,16), nil, Theme.TextSecond, Enum.Font.Gotham, 12)
 
                         local ddBtn = Instance.new("TextButton")
-                        ddBtn.Size = UDim2.new(1,0,0,24)
+                        ddBtn.Size = UDim2.new(1,0,0,0) -- Automatic size in Y
+                        ddBtn.AutomaticSize = Enum.AutomaticSize.Y
                         ddBtn.Position = UDim2.fromOffset(0,18)
                         ddBtn.BackgroundColor3 = Theme.BGItem
                         ddBtn.Text = ""
@@ -790,13 +791,15 @@ function PrimordialUI:CreateWindow(config)
                         local selectedL = MakeLabel(ddBtn, "", -- Initial text will be set by updateSelectedText
                             UDim2.new(1,-24,1,0), UDim2.fromOffset(8,0),
                             Theme.TextPrimary, Enum.Font.Gotham, 12)
-                        table.insert(Window._primaryTextElements, selectedL)
+                        selectedL.TextWrapped = true
+                        selectedL.TextYAlignment = Enum.TextYAlignment.Center
 
                         local arrow = MakeLabel(ddBtn, "▾",
                             UDim2.fromOffset(16,16),
-                            UDim2.new(1,-20,0,4),
+                            UDim2.new(1,-20,1,-18),
                             Theme.TextDim, Enum.Font.Gotham, 12)
                         arrow.TextXAlignment = Enum.TextXAlignment.Center
+                        arrow.TextYAlignment = Enum.TextYAlignment.Center
 
                         local selectedValues = {}
                         if multiSelect then
