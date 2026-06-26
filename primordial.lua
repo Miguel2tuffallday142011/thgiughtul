@@ -708,7 +708,7 @@ function PrimordialUI:CreateWindow(config)
                         fill.Name = "Fill"
                         MakeCorner(fill, 4)
 
-                        local knob = MakeFrame(track, UDim2.fromOffset(6,10), UDim2.new(0,0,0.5,-5), Theme.TextPrimary) -- Knob
+                        local knob = MakeFrame(track, UDim2.fromOffset(8,10), UDim2.new(0,0,0.5,-5), Theme.TextPrimary) -- Knob
                         knob.Name = "Knob"
                         MakeCorner(knob, 3)
 
@@ -865,14 +865,25 @@ function PrimordialUI:CreateWindow(config)
                             isOpen = true
                             arrow.Text = "▴"
 
-                            local listH = #options * 24 + 4
-                            -- Open above the button
-                            dropList = MakeFrame(row,
+                            -- Open below the button
+                            dropList = MakeFrame(Window._sg, -- Parent to ScreenGui for absolute positioning
                                 UDim2.new(1,0,0, listH),
-                                UDim2.new(0,0,0, -(listH + 2)),
+                                UDim2.new(0,0,0,0), -- Temporary position
                                 Theme.BGItem)
-                            dropList.ZIndex = 999 -- Increased ZIndex to ensure it appears on top
+                            dropList.ZIndex = 999 -- Ensure it's always on top
                             MakeCorner(dropList, 4)
+
+                            -- Calculate absolute position for dropList
+                            local ddBtnAbsPos = ddBtn.AbsolutePosition
+                            local ddBtnAbsSize = ddBtn.AbsoluteSize
+
+                            -- Position dropList directly below ddBtn, matching ddBtn's X and width
+                            dropList.Position = UDim2.fromOffset(
+                                ddBtnAbsPos.X,
+                                ddBtnAbsPos.Y + ddBtnAbsSize.Y + 2 -- +2 for a small gap below the button
+                            )
+                            dropList.Size = UDim2.fromOffset(ddBtnAbsSize.X, listH) -- Match width of ddBtn
+
                             MakePadding(dropList, 2,2,2,2)
                             MakeListLayout(dropList, Enum.FillDirection.Vertical, 0)
 
