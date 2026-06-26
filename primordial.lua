@@ -837,15 +837,19 @@ function PrimordialUI:CreateWindow(config)
                                 end
                                 if #texts == 0 then
                                     selectedL.Text = "None Selected"
+                                    selectedL.TextColor3 = Theme.TextPrimary -- No items selected, use normal text
                                 elseif #texts == #options then
                                     selectedL.Text = "All Selected"
+                                    selectedL.TextColor3 = Theme.Accent -- All items selected, use accent color
                                 else
                                     selectedL.Text = table.concat(texts, ", ")
+                                    selectedL.TextColor3 = Theme.Accent -- Some items selected, use accent color
                                 end
                             else
                                 for val, isSel in pairs(selectedValues) do
                                     if isSel then selectedL.Text = val; break end
                                 end
+                                selectedL.TextColor3 = Theme.TextPrimary -- For single select, text color remains normal
                             end
                         end
                         updateSelectedText()
