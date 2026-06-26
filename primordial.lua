@@ -612,7 +612,7 @@ function PrimordialUI:CreateWindow(config)
                     box.Parent = holder
                     MakeCorner(box, 6)
                     MakePadding(box, 10, 10, 10, 10)
-                    MakeListLayout(box, Enum.FillDirection.Vertical, 8)
+                    MakeListLayout(box, Enum.FillDirection.Vertical, 12)
 
                     -- Section title
                     local titleRow = MakeFrame(box, UDim2.new(1,0,0,16), nil, Theme.BGTertiary)
