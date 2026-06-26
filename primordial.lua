@@ -772,6 +772,7 @@ function PrimordialUI:CreateWindow(config)
                         local options  = config.Options  or {}
                         local default  = config.Default  or (options[1] or "")
                         local callback = config.Callback or function() end
+                        local multiSelect = config.MultiSelect or false
 
                         local row = MakeFrame(box, UDim2.new(1,0,0,44), nil, Theme.BGTertiary)
                         local lbl = MakeLabel(row, label,
@@ -786,7 +787,7 @@ function PrimordialUI:CreateWindow(config)
                         ddBtn.Parent = row
                         MakeCorner(ddBtn, 4)
 
-                        local selectedL = MakeLabel(ddBtn, default,
+                        local selectedL = MakeLabel(ddBtn, "", -- Initial text will be set by updateSelectedText
                             UDim2.new(1,-24,1,0), UDim2.fromOffset(8,0),
                             Theme.TextPrimary, Enum.Font.Gotham, 12)
                         table.insert(Window._primaryTextElements, selectedL)
@@ -797,14 +798,57 @@ function PrimordialUI:CreateWindow(config)
                             Theme.TextDim, Enum.Font.Gotham, 12)
                         arrow.TextXAlignment = Enum.TextXAlignment.Center
 
-                        local value = default
+                        local selectedValues = {}
+                        if multiSelect then
+                            -- Default can be a table of values for multi-select
+                            if type(default) == "table" then
+                                for _, v in ipairs(default) do
+                                    selectedValues[v] = true
+                                end
+                            end
+                        else
+                            -- Default is a single value for single-select
+                            selectedValues[default] = true
+                        end
+
                         local isOpen = false
                         local dropList = nil
+
+                        local function updateSelectedText()
+                            if multiSelect then
+                                local texts = {}
+                                for _, opt in ipairs(options) do
+                                    if selectedValues[opt] then
+                                        table.insert(texts, opt)
+                                    end
+                                end
+                                if #texts == 0 then
+                                    selectedL.Text = "None Selected"
+                                elseif #texts == #options then
+                                    selectedL.Text = "All Selected"
+                                else
+                                    selectedL.Text = table.concat(texts, ", ")
+                                end
+                            else
+                                for val, isSel in pairs(selectedValues) do
+                                    if isSel then selectedL.Text = val; break end
+                                end
+                            end
+                        end
+                        updateSelectedText()
 
                         local function closeDropdown()
                             if dropList then dropList:Destroy(); dropList = nil end
                             isOpen = false
                             arrow.Text = "▾"
+                            -- For multi-select, callback is fired when dropdown closes
+                            if multiSelect then
+                                local currentSelections = {}
+                                for opt, isSelected in pairs(selectedValues) do
+                                    if isSelected then table.insert(currentSelections, opt) end
+                                end
+                                callback(currentSelections)
+                            end
                         end
 
                         local function openDropdown()
@@ -828,7 +872,7 @@ function PrimordialUI:CreateWindow(config)
                                 optBtn.Size = UDim2.new(1,0,0,24)
                                 optBtn.BackgroundTransparency = 1
                                 optBtn.Text = opt
-                                optBtn.TextColor3 = opt == value and Theme.Accent or Theme.TextPrimary
+                                optBtn.TextColor3 = selectedValues[opt] and Theme.Accent or Theme.TextPrimary
                                 optBtn.Font = Enum.Font.Gotham
                                 optBtn.TextSize = 12
                                 optBtn.TextXAlignment = Enum.TextXAlignment.Left
@@ -846,24 +890,64 @@ function PrimordialUI:CreateWindow(config)
                                     optBtn.BackgroundTransparency = 1
                                 end)
                                 optBtn.MouseButton1Click:Connect(function()
-                                    value = opt
-                                    selectedL.Text = opt
-                                    closeDropdown()
-                                    callback(opt)
+                                    if multiSelect then
+                                        selectedValues[opt] = not selectedValues[opt]
+                                        optBtn.TextColor3 = selectedValues[opt] and Theme.Accent or Theme.TextPrimary
+                                        updateSelectedText()
+                                        -- For multi-select, dropdown stays open
+                                    else
+                                        -- For single select
+                                        for val in pairs(selectedValues) do selectedValues[val] = false end -- Deselect all
+                                        selectedValues[opt] = true
+                                        updateSelectedText()
+                                        closeDropdown()
+                                        callback(opt)
+                                    end
                                 end)
                             end
+                            
+                            -- Close when clicking outside for both single and multi-select
+                            local closConn
+                            closConn = UserInputService.InputBegan:Connect(function(inp)
+                                if inp.UserInputType == Enum.UserInputType.MouseButton1 then
+                                    local mp = Vector2.new(inp.Position.X, inp.Position.Y)
+                                    local ap = dropList.AbsolutePosition
+                                    local as = dropList.AbsoluteSize
+                                    -- Only close if click is outside the dropdown and not on the main button
+                                    if (mp.X < ap.X or mp.X > ap.X+as.X or mp.Y < ap.Y or mp.Y > ap.Y+as.Y) and (mp.X < ddBtn.AbsolutePosition.X or mp.X > ddBtn.AbsolutePosition.X+ddBtn.AbsoluteSize.X or mp.Y < ddBtn.AbsolutePosition.Y or mp.Y > ddBtn.AbsolutePosition.Y+ddBtn.AbsoluteSize.Y) then
+                                        closConn:Disconnect()
+                                        task.defer(closeDropdown)
+                                    end
+                                end
+                            end)
                         end
 
                         ddBtn.MouseButton1Click:Connect(function()
                             if isOpen then closeDropdown() else openDropdown() end
                         end)
 
-                        local Dropdown = {Value = value}
+                        local Dropdown = {Value = default, SelectedValues = selectedValues}
                         function Dropdown:SetValue(v)
-                            value = v
-                            selectedL.Text = v
-                            Dropdown.Value = v
-                            callback(v)
+                            if multiSelect then
+                                -- Set values for multi-select (v should be a table)
+                                for opt in pairs(selectedValues) do selectedValues[opt] = false end -- Clear existing
+                                for _, val in ipairs(v) do
+                                    selectedValues[val] = true
+                                end
+                                updateSelectedText()
+                                local currentSelections = {}
+                                for opt, isSelected in pairs(selectedValues) do
+                                    if isSelected then table.insert(currentSelections, opt) end
+                                end
+                                callback(currentSelections)
+                            else
+                                -- Set value for single select
+                                for val in pairs(selectedValues) do selectedValues[val] = false end
+                                selectedValues[v] = true
+                                selectedL.Text = v
+                                Dropdown.Value = v
+                                callback(v)
+                            end
                         end
                         return Dropdown
                     end
@@ -1562,4 +1646,3 @@ end -- CreateWindow
 
 getgenv().PrimordialUI = PrimordialUI
 return PrimordialUI
-
