@@ -1235,6 +1235,9 @@ function PrimordialUI:CreateWindow(config)
                     return Section
                 end -- AddSection
 
+                return SubTab
+            end -- AddSubTab
+
             return Page
         end -- AddPage
 
