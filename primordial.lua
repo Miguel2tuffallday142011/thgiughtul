@@ -526,7 +526,8 @@ function PrimordialUI:CreateWindow(config)
                 -- Use UIListLayout so columns flow left to right
                 local stColList = Instance.new("UIListLayout")
                 stColList.FillDirection = Enum.FillDirection.Horizontal
-                stColList.Padding = UDim.new(0, 8)ent = Enum.HorizontalAlignment.Left
+                stColList.Padding = UDim.new(0, 8)
+                stColList.HorizontalAlignment = Enum.HorizontalAlignment.Left
                 stColList.VerticalAlignment = Enum.VerticalAlignment.Top
                 stColList.SortOrder = Enum.SortOrder.LayoutOrder
                 stColList.Parent = stColHolder
@@ -536,7 +537,7 @@ function PrimordialUI:CreateWindow(config)
                     UDim2.new(0.5, -4, 0, 0), UDim2.new(0,0,0,0), Theme.BG)
                 stLeftHolder.LayoutOrder = 1
                 stLeftHolder.AutomaticSize = Enum.AutomaticSize.Y
-                MakeListLayout(stLeftHolder, Enum.FillDirection.Vertical, 12)
+                MakeListLayout(stLeftHolder, Enum.FillDirection.Vertical, 8
                 SubTab._leftHolder = stLeftHolder
 
                 -- Right column: same size, hidden until used
@@ -545,7 +546,7 @@ function PrimordialUI:CreateWindow(config)
                 stRightHolder.LayoutOrder = 2
                 stRightHolder.AutomaticSize = Enum.AutomaticSize.Y
                 stRightHolder.Visible = false
-                MakeListLayout(stRightHolder, Enum.FillDirection.Vertical, 12)
+                MakeListLayout(stRightHolder, Enum.FillDirection.Vertical, 88
                 SubTab._rightHolder = stRightHolder
                 SubTab._colHolder = stColHolder
                 SubTab._hasTwoCols = false
@@ -607,7 +608,6 @@ function PrimordialUI:CreateWindow(config)
                     box.BackgroundColor3 = Theme.BGTertiary
                     box.BorderSizePixel = 0
                     box.Size = UDim2.fromOffset(0,0)
-                    box.ClipsDescendants = true -- Enable clipping to prevent lines from going off
                     box.Parent = holder
                     MakeCorner(box, 6)
                     MakePadding(box, 10, 10, 10, 10)
