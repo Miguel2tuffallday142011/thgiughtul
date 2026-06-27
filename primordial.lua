@@ -854,7 +854,10 @@ function PrimordialUI:CreateWindow(config)
                         end
                         updateSelectedText()
 
+                        local closConn -- declare here
+
                         local function closeDropdown()
+                            if closConn then closConn:Disconnect(); closConn = nil end
                             if dropList then dropList:Destroy(); dropList = nil end
                             isOpen = false
                             arrow.Text = "▾"
@@ -936,7 +939,6 @@ function PrimordialUI:CreateWindow(config)
                             end
                             
                             -- Close when clicking outside for both single and multi-select
-                            local closConn
                             closConn = UserInputService.InputBegan:Connect(function(inp)
                                 if inp.UserInputType == Enum.UserInputType.MouseButton1 then
                                     local mp = Vector2.new(inp.Position.X, inp.Position.Y)
@@ -1170,8 +1172,10 @@ function PrimordialUI:CreateWindow(config)
                         local h_val, s_val, v_val = default:ToHSV()
                         local isOpen = false
                         local picker = nil
+                        local closConn
 
                         local function closePicker()
+                            if closConn then closConn:Disconnect(); closConn = nil end
                             if picker then picker:Destroy(); picker = nil end
                             isOpen = false
                         end
@@ -1343,7 +1347,6 @@ function PrimordialUI:CreateWindow(config)
                             end)
 
                             -- Close when clicking outside
-                            local closConn
                             closConn = UserInputService.InputBegan:Connect(function(inp)
                                 if inp.UserInputType == Enum.UserInputType.MouseButton1 then
                                     local mp = Vector2.new(inp.Position.X, inp.Position.Y)
