@@ -116,7 +116,8 @@ function PrimordialUI:CreateWindow(config)
     sg.ResetOnSpawn = false
     sg.DisplayOrder = 999
     sg.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    sg.Parent = game:GetService("Players").LocalPlayer.PlayerGui
+    pcall(function() sg.Parent = game:GetService("CoreGui") end)
+    if not sg.Parent then sg.Parent = game:GetService("Players").LocalPlayer.PlayerGui end
     Window._sg = sg
 
     -- Main frame
@@ -938,11 +939,6 @@ function PrimordialUI:CreateWindow(config)
                             local closConn
                             closConn = UserInputService.InputBegan:Connect(function(inp)
                                 if inp.UserInputType == Enum.UserInputType.MouseButton1 then
-                                    if not dropList or not ddBtn then
-                                        if closConn then closConn:Disconnect() end
-                                        return
-                                    end
-                                    
                                     local mp = Vector2.new(inp.Position.X, inp.Position.Y)
                                     local ap = dropList.AbsolutePosition
                                     local as = dropList.AbsoluteSize
