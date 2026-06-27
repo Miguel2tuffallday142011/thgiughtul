@@ -59,34 +59,7 @@ local function MakeListLayout(parent, dir, spacing, halign, valign)
     return l
 end
 
-local function MakeFrame(parent, size, pos, color, trans, colorName)
-    local f = Instance.new("Frame")
-    f.Size = size or UDim2.new(1,0,1,0)
-    f.Position = pos or UDim2.new(0,0,0,0)
-    f.BackgroundColor3 = color or Theme.BG
-    f.BackgroundTransparency = trans or 0
-    f.BorderSizePixel = 0
-    f.Parent = parent
-    if colorName then Themer:Register(colorName, f) end
-    return f
-end
 
-local function MakeLabel(parent, text, size, pos, color, font, textsize, colorName, property)
-    local l = Instance.new("TextLabel")
-    l.Size = size or UDim2.new(1,0,0,16)
-    l.Position = pos or UDim2.new(0,0,0,0)
-    l.BackgroundTransparency = 1
-    l.Text = text or ""
-    l.TextColor3 = color or Theme.TextPrimary
-    l.Font = font or Enum.Font.Gotham
-    l.TextSize = textsize or 13
-    l.TextXAlignment = Enum.TextXAlignment.Left
-    l.BorderSizePixel = 0
-    l.RichText = true
-    l.Parent = parent
-    if colorName then Themer:Register(colorName, l, property or "TextColor3") end
-    return l
-end
 
 -- ─────────────────────────────────────────────────────────────
 -- WINDOW CREATE
