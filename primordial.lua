@@ -726,9 +726,9 @@ function PrimordialUI:CreateWindow(config)
                         local callback = config.Callback or function() end
                         local decimals = config.Decimals or 0
 
-                        local row = MakeFrame(box, UDim2.new(1,0,0,28), nil, Theme.BGTertiary, nil, "BGTertiary")
+                        local row = MakeFrame(box, UDim2.new(1,0,0,28), nil, Theme.BGTertiary)
 
-                        local topRow = MakeFrame(row, UDim2.new(1,0,0,16), nil, Theme.BGTertiary, nil, "BGTertiary")
+                        local topRow = MakeFrame(row, UDim2.new(1,0,0,16), nil, Theme.BGTertiary)
                         local lbl = MakeLabel(topRow, label, UDim2.new(1,-60,1,0), nil,
                             Theme.TextSecond, Enum.Font.Gotham, 12)
                         local valLbl = MakeLabel(topRow, tostring(default)..suffix,
@@ -736,13 +736,13 @@ function PrimordialUI:CreateWindow(config)
                             Theme.TextDim, Enum.Font.GothamBold, 12)
                         valLbl.TextXAlignment = Enum.TextXAlignment.Right
 
-                        local track = MakeFrame(row, UDim2.new(1,0,0,8), UDim2.new(0,0,0,18), Theme.SliderBG, nil, "SliderBG")
+                        local track = MakeFrame(row, UDim2.new(1,0,0,8), UDim2.new(0,0,0,18), Theme.SliderBG)
                         MakeCorner(track, 4)
-                        local fill = MakeFrame(track, UDim2.new(0,0,1,0), nil, Theme.SliderFill, nil, "SliderFill")
+                        local fill = MakeFrame(track, UDim2.new(0,0,1,0), nil, Theme.SliderFill)
                         fill.Name = "Fill"
                         MakeCorner(fill, 4)
 
-                        local knob = MakeFrame(track, UDim2.fromOffset(12,8), UDim2.new(0,0,0.5,-4), Theme.TextPrimary, nil, "TextPrimary") -- Knob
+                        local knob = MakeFrame(track, UDim2.fromOffset(12,8), UDim2.new(0,0,0.5,-4), Theme.TextPrimary) -- Knob
                         knob.Name = "Knob"
                         MakeCorner(knob, 4)
 
