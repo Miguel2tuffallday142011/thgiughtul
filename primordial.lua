@@ -59,7 +59,34 @@ local function MakeListLayout(parent, dir, spacing, halign, valign)
     return l
 end
 
+local function MakeFrame(parent, size, pos, color, trans, colorName)
+    local f = Instance.new("Frame")
+    f.Size = size or UDim2.new(1,0,1,0)
+    f.Position = pos or UDim2.new(0,0,0,0)
+    f.BackgroundColor3 = color or Theme.BG
+    f.BackgroundTransparency = trans or 0
+    f.BorderSizePixel = 0
+    f.Parent = parent
+    if colorName then Themer:Register(colorName, f) end
+    return f
+end
 
+local function MakeLabel(parent, text, size, pos, color, font, textsize, colorName, property)
+    local l = Instance.new("TextLabel")
+    l.Size = size or UDim2.new(1,0,0,16)
+    l.Position = pos or UDim2.new(0,0,0,0)
+    l.BackgroundTransparency = 1
+    l.Text = text or ""
+    l.TextColor3 = color or Theme.TextPrimary
+    l.Font = font or Enum.Font.Gotham
+    l.TextSize = textsize or 13
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    l.BorderSizePixel = 0
+    l.RichText = true
+    l.Parent = parent
+    if colorName then Themer:Register(colorName, l, property or "TextColor3") end
+    return l
+end
 
 -- ─────────────────────────────────────────────────────────────
 -- WINDOW CREATE
@@ -113,7 +140,6 @@ function PrimordialUI:CreateWindow(config)
         _toggleSwitches = {}, -- New list for toggle switch track buttons
         _registeredToggles = {}, -- New list for all Toggle objects
         UpdateTheme = function(newColors) Themer:Update(newColors) end,
-        GetTheme = function() return Theme end,
     }
     -- ScreenGui
     local sg = Instance.new("ScreenGui")
@@ -788,7 +814,7 @@ function PrimordialUI:CreateWindow(config)
                         local callback = config.Callback or function() end
                         local multiSelect = config.MultiSelect or false
 
-                        local row = MakeFrame(box, UDim2.new(1,0,0,44), nil, Theme.BGTertiary, nil, "BGTertiary")
+                        local row = MakeFrame(box, UDim2.new(1,0,0,44), nil, Theme.BGTertiary)
                         local lbl = MakeLabel(row, label,
                             UDim2.new(1,0,0,16), nil, Theme.TextSecond, Enum.Font.Gotham, 12)
 
@@ -797,7 +823,6 @@ function PrimordialUI:CreateWindow(config)
                         ddBtn.AutomaticSize = Enum.AutomaticSize.Y
                         ddBtn.Position = UDim2.fromOffset(0,18)
                         ddBtn.BackgroundColor3 = Theme.BGItem
-                        Themer:Register("BGItem", ddBtn)
                         ddBtn.Text = ""
                         ddBtn.BorderSizePixel = 0
                         ddBtn.Parent = row
@@ -884,7 +909,7 @@ function PrimordialUI:CreateWindow(config)
                             dropList = MakeFrame(Window._sg, -- Parent to ScreenGui for absolute positioning
                                 UDim2.new(1,0,0, listH),
                                 UDim2.new(0,0,0,0), -- Temporary position
-                                Theme.BGItem, nil, "BGItem")
+                                Theme.BGItem)
                             dropList.ZIndex = 999 -- Ensure it's always on top
                             MakeCorner(dropList, 4)
 
@@ -907,7 +932,6 @@ function PrimordialUI:CreateWindow(config)
                                 optBtn.Size = UDim2.new(1,0,0,24)
                                 optBtn.BackgroundTransparency = 0 -- Set to 0 for visible background
                                 optBtn.BackgroundColor3 = Theme.BGItem -- Default background color
-                                Themer:Register("BGItem", optBtn)
                                 optBtn.Text = opt
                                 optBtn.TextColor3 = selectedValues[opt] and Theme.Accent or Theme.TextPrimary
                                 optBtn.Font = Enum.Font.Gotham
