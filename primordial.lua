@@ -59,7 +59,7 @@ local function MakeListLayout(parent, dir, spacing, halign, valign)
     return l
 end
 
-local function MakeFrame(parent, size, pos, color, trans)
+local function MakeFrame(parent, size, pos, color, trans, colorName)
     local f = Instance.new("Frame")
     f.Size = size or UDim2.new(1,0,1,0)
     f.Position = pos or UDim2.new(0,0,0,0)
@@ -67,10 +67,11 @@ local function MakeFrame(parent, size, pos, color, trans)
     f.BackgroundTransparency = trans or 0
     f.BorderSizePixel = 0
     f.Parent = parent
+    if colorName then Themer:Register(colorName, f) end
     return f
 end
 
-local function MakeLabel(parent, text, size, pos, color, font, textsize)
+local function MakeLabel(parent, text, size, pos, color, font, textsize, colorName, property)
     local l = Instance.new("TextLabel")
     l.Size = size or UDim2.new(1,0,0,16)
     l.Position = pos or UDim2.new(0,0,0,0)
@@ -83,6 +84,7 @@ local function MakeLabel(parent, text, size, pos, color, font, textsize)
     l.BorderSizePixel = 0
     l.RichText = true
     l.Parent = parent
+    if colorName then Themer:Register(colorName, l, property or "TextColor3") end
     return l
 end
 
@@ -95,6 +97,34 @@ function PrimordialUI:CreateWindow(config)
     local image    = config.Image    or nil
     local subtitle = config.Subtitle or ""
     local size     = config.Size     or Vector2.new(760, 500)
+
+    -- Themer: Handles live updates of UI colors
+    local Themer = { _elements = {} }
+    for colorName, _ in pairs(Theme) do
+        Themer._elements[colorName] = {}
+    end
+
+    function Themer:Register(colorName, element, property)
+        property = property or "BackgroundColor3"
+        if not self._elements[colorName] then return end
+        table.insert(self._elements[colorName], {
+            Element = element,
+            Property = property,
+        })
+    end
+
+    function Themer:Update(newTheme)
+        for colorName, colorValue in pairs(newTheme) do
+            if Theme[colorName] and Theme[colorName] ~= colorValue then
+                Theme[colorName] = colorValue
+                if self._elements[colorName] then
+                    for _, item in ipairs(self._elements[colorName]) do
+                        Tween(item.Element, {[item.Property] = colorValue}, 0.15)
+                    end
+                end
+            end
+        end
+    end
 
     local Window = {
         _tabs     = {},
@@ -109,6 +139,8 @@ function PrimordialUI:CreateWindow(config)
         _notificationsEnabled = true, -- Default notification enablement
         _toggleSwitches = {}, -- New list for toggle switch track buttons
         _registeredToggles = {}, -- New list for all Toggle objects
+        UpdateTheme = function(newColors) Themer:Update(newColors) end,
+        GetTheme = function() return Theme end,
     }
     -- ScreenGui
     local sg = Instance.new("ScreenGui")
@@ -185,7 +217,7 @@ function PrimordialUI:CreateWindow(config)
     local content = MakeFrame(main,
         UDim2.new(1,0,1,-100),
         UDim2.new(0,0,0,51),
-        Theme.BG)
+        Theme.BG, nil, "BG")
     content.ClipsDescendants = true
     Window._content = content
 
@@ -193,7 +225,7 @@ function PrimordialUI:CreateWindow(config)
     local sidebar = MakeFrame(content,
         UDim2.new(0,150,1,0),
         UDim2.new(0,0,0,0),
-        Theme.Sidebar)
+        Theme.Sidebar, nil, "Sidebar")
     sidebar.Name = "Sidebar"
     MakePadding(sidebar, 8, 6, 8, 6)
     local sideList = MakeListLayout(sidebar, Enum.FillDirection.Vertical, 2)
@@ -226,13 +258,13 @@ function PrimordialUI:CreateWindow(config)
     local subUnderline = MakeFrame(rightPane,
         UDim2.new(1,0,0,1),
         UDim2.new(0,0,0,35),
-        Theme.Border)
+        Theme.Border, nil, "Border")
 
     -- Column area
     local colArea = MakeFrame(rightPane,
         UDim2.new(1,0,1,-37),
         UDim2.new(0,0,0,37),
-        Theme.BG)
+        Theme.BG, nil, "BG")
     colArea.ClipsDescendants = true
     Window._colArea = colArea
 
@@ -240,7 +272,7 @@ function PrimordialUI:CreateWindow(config)
     local tabBar = MakeFrame(main,
         UDim2.new(1,0,0,48),
         UDim2.new(0,0,1,-48),
-        Theme.TabBar)
+        Theme.TabBar, nil, "TabBar")
     local tabFix = MakeFrame(tabBar, UDim2.new(1,0,0,6), UDim2.new(0,0,0,0), Theme.TabBar)
     local tabSep = MakeFrame(tabBar, UDim2.new(1,0,0,1), UDim2.new(0,0,0,0), Theme.Accent)
     tabSep.Name = "AccentLine"
@@ -291,7 +323,7 @@ function PrimordialUI:CreateWindow(config)
         local indicator = MakeFrame(btn,
             UDim2.new(0.6,0,0,2),
             UDim2.new(0.2,0,1,-2),
-            Theme.Accent)
+            Theme.Accent, nil, "Accent")
         indicator.Name = "Indicator"
         MakeCorner(indicator, 1)
         indicator.Visible = false
@@ -410,7 +442,7 @@ function PrimordialUI:CreateWindow(config)
             local pageFrame = MakeFrame(tabContent,
                 UDim2.new(1,0,1,0),
                 UDim2.new(0,0,0,0),
-                Theme.BG)
+                Theme.BG, nil, "BG")
             pageFrame.Visible = false
             Page._frame = pageFrame
 
@@ -533,7 +565,7 @@ function PrimordialUI:CreateWindow(config)
 
                 -- Left column: always 50% so right column can sit beside it
                 local stLeftHolder = MakeFrame(stColHolder,
-                    UDim2.new(0.5, -32, 0, 0), UDim2.new(0,0,0,0), Theme.BG)
+                    UDim2.new(0.5, -32, 0, 0), UDim2.new(0,0,0,0), Theme.BG, nil, "BG")
                 stLeftHolder.LayoutOrder = 1
                 stLeftHolder.AutomaticSize = Enum.AutomaticSize.Y
                 MakeListLayout(stLeftHolder, Enum.FillDirection.Vertical, 8)
@@ -613,7 +645,7 @@ function PrimordialUI:CreateWindow(config)
                     MakeListLayout(box, Enum.FillDirection.Vertical, 8)
 
                     -- Section title
-                    local titleRow = MakeFrame(box, UDim2.new(1,0,0,16), nil, Theme.BGTertiary)
+                    local titleRow = MakeFrame(box, UDim2.new(1,0,0,16), nil, Theme.BGTertiary, nil, "BGTertiary")
                     local titleL = MakeLabel(titleRow, sTitle,
                         UDim2.new(1,0,1,0), nil,
                         Theme.TextSecond, Enum.Font.GothamBold, 12)
@@ -631,7 +663,7 @@ function PrimordialUI:CreateWindow(config)
                         local callback = config.Callback or function() end
                         local flag     = config.Flag
 
-                        local row = MakeFrame(box, UDim2.new(1,0,0,24), nil, Theme.BGTertiary)
+                        local row = MakeFrame(box, UDim2.new(1,0,0,24), nil, Theme.BGTertiary, nil, "BGTertiary")
 
                         local lbl = MakeLabel(row, label,
                             UDim2.new(1,-20,1,0), UDim2.fromOffset(20,0), -- Adjusted label position
@@ -649,7 +681,7 @@ function PrimordialUI:CreateWindow(config)
                         local checkIndicator = MakeFrame(checkboxFrame,
                             UDim2.new(1,0,1,0),
                             UDim2.new(0,0,0,0),
-                            Theme.Accent) -- Accent color for checked state
+                            Theme.Accent, nil, "Accent") -- Accent color for checked state
                         checkIndicator.Name = "CheckIndicator"
                         checkIndicator.Visible = default
                         MakeCorner(checkIndicator, 2)
@@ -695,9 +727,9 @@ function PrimordialUI:CreateWindow(config)
                         local callback = config.Callback or function() end
                         local decimals = config.Decimals or 0
 
-                        local row = MakeFrame(box, UDim2.new(1,0,0,28), nil, Theme.BGTertiary)
+                        local row = MakeFrame(box, UDim2.new(1,0,0,28), nil, Theme.BGTertiary, nil, "BGTertiary")
 
-                        local topRow = MakeFrame(row, UDim2.new(1,0,0,16), nil, Theme.BGTertiary)
+                        local topRow = MakeFrame(row, UDim2.new(1,0,0,16), nil, Theme.BGTertiary, nil, "BGTertiary")
                         local lbl = MakeLabel(topRow, label, UDim2.new(1,-60,1,0), nil,
                             Theme.TextSecond, Enum.Font.Gotham, 12)
                         local valLbl = MakeLabel(topRow, tostring(default)..suffix,
@@ -705,13 +737,13 @@ function PrimordialUI:CreateWindow(config)
                             Theme.TextDim, Enum.Font.GothamBold, 12)
                         valLbl.TextXAlignment = Enum.TextXAlignment.Right
 
-                        local track = MakeFrame(row, UDim2.new(1,0,0,8), UDim2.new(0,0,0,18), Theme.SliderBG)
+                        local track = MakeFrame(row, UDim2.new(1,0,0,8), UDim2.new(0,0,0,18), Theme.SliderBG, nil, "SliderBG")
                         MakeCorner(track, 4)
-                        local fill = MakeFrame(track, UDim2.new(0,0,1,0), nil, Theme.SliderFill)
+                        local fill = MakeFrame(track, UDim2.new(0,0,1,0), nil, Theme.SliderFill, nil, "SliderFill")
                         fill.Name = "Fill"
                         MakeCorner(fill, 4)
 
-                        local knob = MakeFrame(track, UDim2.fromOffset(12,8), UDim2.new(0,0,0.5,-4), Theme.TextPrimary) -- Knob
+                        local knob = MakeFrame(track, UDim2.fromOffset(12,8), UDim2.new(0,0,0.5,-4), Theme.TextPrimary, nil, "TextPrimary") -- Knob
                         knob.Name = "Knob"
                         MakeCorner(knob, 4)
 
@@ -783,7 +815,7 @@ function PrimordialUI:CreateWindow(config)
                         local callback = config.Callback or function() end
                         local multiSelect = config.MultiSelect or false
 
-                        local row = MakeFrame(box, UDim2.new(1,0,0,44), nil, Theme.BGTertiary)
+                        local row = MakeFrame(box, UDim2.new(1,0,0,44), nil, Theme.BGTertiary, nil, "BGTertiary")
                         local lbl = MakeLabel(row, label,
                             UDim2.new(1,0,0,16), nil, Theme.TextSecond, Enum.Font.Gotham, 12)
 
@@ -792,6 +824,7 @@ function PrimordialUI:CreateWindow(config)
                         ddBtn.AutomaticSize = Enum.AutomaticSize.Y
                         ddBtn.Position = UDim2.fromOffset(0,18)
                         ddBtn.BackgroundColor3 = Theme.BGItem
+                        Themer:Register("BGItem", ddBtn)
                         ddBtn.Text = ""
                         ddBtn.BorderSizePixel = 0
                         ddBtn.Parent = row
@@ -878,7 +911,7 @@ function PrimordialUI:CreateWindow(config)
                             dropList = MakeFrame(Window._sg, -- Parent to ScreenGui for absolute positioning
                                 UDim2.new(1,0,0, listH),
                                 UDim2.new(0,0,0,0), -- Temporary position
-                                Theme.BGItem)
+                                Theme.BGItem, nil, "BGItem")
                             dropList.ZIndex = 999 -- Ensure it's always on top
                             MakeCorner(dropList, 4)
 
@@ -901,6 +934,7 @@ function PrimordialUI:CreateWindow(config)
                                 optBtn.Size = UDim2.new(1,0,0,24)
                                 optBtn.BackgroundTransparency = 0 -- Set to 0 for visible background
                                 optBtn.BackgroundColor3 = Theme.BGItem -- Default background color
+                                Themer:Register("BGItem", optBtn)
                                 optBtn.Text = opt
                                 optBtn.TextColor3 = selectedValues[opt] and Theme.Accent or Theme.TextPrimary
                                 optBtn.Font = Enum.Font.Gotham
