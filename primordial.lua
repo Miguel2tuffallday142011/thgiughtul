@@ -877,13 +877,21 @@ function PrimordialUI:CreateWindow(config)
                             arrow.Text = "▴"
 
                             local listH = #options * 24 + 4 -- Moved this line here
+                            local maxListH = 200
+                            local actualListH = math.min(listH, maxListH)
 
                             -- Open below the button
-                            dropList = MakeFrame(Window._sg, -- Parent to ScreenGui for absolute positioning
-                                UDim2.new(1,0,0, listH),
-                                UDim2.new(0,0,0,0), -- Temporary position
-                                Theme.BGItem)
+                            dropList = Instance.new("ScrollingFrame")
+                            dropList.Size = UDim2.new(1,0,0, actualListH)
+                            dropList.Position = UDim2.new(0,0,0,0) -- Temporary position
+                            dropList.BackgroundColor3 = Theme.BGItem
+                            dropList.BorderSizePixel = 0
                             dropList.ZIndex = 999 -- Ensure it's always on top
+                            dropList.Parent = Window._sg
+                            dropList.ScrollBarThickness = 2
+                            dropList.ScrollBarImageColor3 = Theme.Accent
+                            dropList.ScrollingDirection = Enum.ScrollingDirection.Y
+                            dropList.CanvasSize = UDim2.new(0,0,0, listH)
                             MakeCorner(dropList, 4)
 
                             -- Calculate absolute position for dropList
@@ -895,7 +903,7 @@ function PrimordialUI:CreateWindow(config)
                                 ddBtnAbsPos.X,
                                 ddBtnAbsPos.Y + ddBtnAbsSize.Y + 2 -- +2 for a small gap below the button
                             )
-                            dropList.Size = UDim2.fromOffset(ddBtnAbsSize.X, listH) -- Match width of ddBtn
+                            dropList.Size = UDim2.fromOffset(ddBtnAbsSize.X, actualListH) -- Match width of ddBtn
 
                             MakePadding(dropList, 2,2,2,2)
                             MakeListLayout(dropList, Enum.FillDirection.Vertical, 0)
